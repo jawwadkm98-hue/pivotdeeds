@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { brand } from "@brand";
 import { legalUpdated } from "@/content/legal";
+import { getSiteContact } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const contact = await getSiteContact();
   return (
     <article className="prose-legal mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
       <p className="kicker">Privacy</p>
@@ -19,7 +21,7 @@ export default function PrivacyPage() {
       <h2>Who we are</h2>
       <p>
         {brand.name} is a real estate investor and cash buyer, not a licensed real estate broker or agent. The contact email for privacy requests is{" "}
-        <a href={`mailto:${brand.email}`}>{brand.email}</a>. Service area: {brand.serviceArea}.
+        <a href={`mailto:${contact.email}`}>{contact.email}</a>. Service area: {brand.serviceArea}.
       </p>
 
       <h2>Information you give us</h2>
@@ -49,17 +51,17 @@ export default function PrivacyPage() {
         We do not sell personal information as a marketing list. To evaluate or complete a sale you asked about, we may share relevant property and contact details with a title or escrow company, a closing attorney, or a prospective cash buyer or assignee. We may also share information with a service provider who hosts this website or stores its database, only so they can operate the service, and with authorities when the law requires it.
       </p>
       <p>
-        If you are a California resident, you can email {brand.email} to request access to or deletion of the personal information we have about you. We will not discriminate against you for making a request. Sharing details with a buyer or title company to pursue a transaction you inquired about is not a sale of a marketing list.
+        If you are a California resident, you can email {contact.email} to request access to or deletion of the personal information we have about you. We will not discriminate against you for making a request. Sharing details with a buyer or title company to pursue a transaction you inquired about is not a sale of a marketing list.
       </p>
 
       <h2>Calls and texts</h2>
       <p>
-        If you check the seller or buyer consent box, you agree that we may call and text the number you provided, including with an automatic telephone dialing system or a prerecorded or artificial voice, about your inquiry and related property services. Message and data rates may apply. Message frequency varies. Reply STOP to opt out of texts and HELP for help. Consent is not a condition of any purchase, sale, or offer. You can also opt out by emailing {brand.email}.
+        If you check the seller or buyer consent box, you agree that we may call and text the number you provided, including with an automatic telephone dialing system or a prerecorded or artificial voice, about your inquiry and related property services. Message and data rates may apply. Message frequency varies. Reply STOP to opt out of texts and HELP for help. Consent is not a condition of any purchase, sale, or offer. You can also opt out by emailing {contact.email}.
       </p>
 
       <h2>Photos</h2>
       <p>
-        Optional photos are stored on the same server as the lead database. They are available to the people who administer this site and are not published on the public pages. We do not ask you to upload a photo of a government ID.
+        Photos attached to a seller request stay in the private admin inbox and are not published. Photos added to a published listing appear on the inventory pages. We do not ask you to upload a photo of a government ID.
       </p>
 
       <h2>How long we keep it</h2>

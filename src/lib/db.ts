@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { SCHEMA_SQL } from "./schema";
+import { COLUMN_PATCHES, SCHEMA_SQL } from "./schema";
 
 export type Sql = {
   all<T>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -24,11 +24,17 @@ type D1Database = {
 export type PhotoBucket = {
   put(key: string, value: ArrayBuffer | ArrayBufferView, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
   get(key: string): Promise<{ body: ReadableStream; httpMetadata?: { contentType?: string } } | null>;
+  delete(key: string): Promise<unknown>;
+};
+
+export type SendEmailBinding = {
+  send(message: unknown): Promise<void>;
 };
 
 type WorkerEnv = {
   DB?: D1Database;
   PHOTOS?: PhotoBucket;
+  NOTIFY_EMAIL?: SendEmailBinding;
   ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;
   ADMIN_SESSION_SECRET?: string;
@@ -138,9 +144,68 @@ export async function getSql(): Promise<Sql> {
   }
   if (!schemaReady) {
     await cached.exec(SCHEMA_SQL);
+    for (const statement of COLUMN_PATCHES) {
+      try {
+        await cached.run(statement);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!/duplicate column/i.test(message)) throw error;
+      }
+    }
     schemaReady = true;
   }
   return cached;
+}
+
+function uploadRoot(): string {
+  const root = process.env.DATABASE_PATH ? path.dirname(process.env.DATABASE_PATH) : path.join(process.cwd(), "data");
+  return path.join(root, "uploads");
+}
+
+function localBlobPath(key: string): string | null {
+  if (!key || key.includes("..") || path.isAbsolute(key)) return null;
+  const root = path.resolve(uploadRoot());
+  const full = path.resolve(root, key);
+  if (full !== root && !full.startsWith(root + path.sep)) return null;
+  return full;
+}
+
+export async function writeBlob(key: string, bytes: Uint8Array, contentType: string): Promise<"r2" | "disk" | "skipped"> {
+  const safe = localBlobPath(key);
+  if (!safe) throw new Error("Invalid storage key");
+  const bucket = await getPhotoBucket();
+  if (bucket) {
+    await bucket.put(key, bytes, { httpMetadata: { contentType } });
+    return "r2";
+  }
+  if (isCloudflareWorker()) return "skipped";
+  fs.mkdirSync(path.dirname(safe), { recursive: true });
+  fs.writeFileSync(safe, bytes);
+  return "disk";
+}
+
+export async function readBlob(key: string): Promise<{ body: Uint8Array | ReadableStream; contentType: string } | null> {
+  const bucket = await getPhotoBucket();
+  if (bucket) {
+    const object = await bucket.get(key);
+    if (!object) return null;
+    return { body: object.body, contentType: object.httpMetadata?.contentType || "application/octet-stream" };
+  }
+  if (isCloudflareWorker()) return null;
+  const safe = localBlobPath(key);
+  if (!safe || !fs.existsSync(safe)) return null;
+  return { body: fs.readFileSync(safe), contentType: "application/octet-stream" };
+}
+
+export async function deleteBlob(key: string): Promise<void> {
+  const bucket = await getPhotoBucket();
+  if (bucket) {
+    await bucket.delete(key);
+    return;
+  }
+  if (isCloudflareWorker()) return;
+  const safe = localBlobPath(key);
+  if (safe && fs.existsSync(safe)) fs.rmSync(safe);
 }
 
 export async function getPhotoBucket(): Promise<PhotoBucket | null> {

@@ -1,4 +1,5 @@
 import { isAuthed } from "@/lib/auth";
+import { inquiriesCsv } from "@/lib/inventory";
 import { buyersCsv, messagesCsv, sellersCsv } from "@/lib/leads";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,7 @@ const files = {
   sellers: sellersCsv,
   buyers: buyersCsv,
   messages: messagesCsv,
+  inquiries: inquiriesCsv,
 } as const;
 
 export async function GET(request: Request) {
@@ -15,7 +17,7 @@ export async function GET(request: Request) {
   if (!(await isAuthed())) return new Response("Unauthorized", { status: 401 });
 
   const type = new URL(request.url).searchParams.get("type");
-  if (type !== "sellers" && type !== "buyers" && type !== "messages") {
+  if (type !== "sellers" && type !== "buyers" && type !== "messages" && type !== "inquiries") {
     return new Response("Unknown export", { status: 400 });
   }
 

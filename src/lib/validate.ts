@@ -2,7 +2,10 @@ import {
   CERTIFICATIONS,
   CONDITIONS,
   JEWELRY_ITEMS,
+  LISTING_STATUSES,
+  LISTING_TYPES,
   METAL_ITEMS,
+  PIPELINE,
   PRICE_RANGES,
   PROPERTY_TYPES,
   REASONS,
@@ -391,4 +394,128 @@ export function parseContact(formData: FormData): ParseResult<ContactInput> {
   if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
 
   return { ok: true, data: { name, email, phone, message } };
+}
+
+function optionalMoney(errors: FieldErrors, key: string, raw: string): number | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(/[$,\s]/g, "");
+  if (!/^\d{1,9}$/.test(cleaned)) {
+    add(errors, key, "Enter a whole dollar amount, or leave this blank.");
+    return null;
+  }
+  return Number(cleaned);
+}
+
+function optionalNumber(errors: FieldErrors, key: string, raw: string, max: number): number | null {
+  if (!raw) return null;
+  if (!/^\d{1,3}(\.\d)?$/.test(raw) || Number(raw) > max) {
+    add(errors, key, "Enter a reasonable number, or leave this blank.");
+    return null;
+  }
+  return Number(raw);
+}
+
+export type ListingInput = {
+  title: string;
+  propertyType: string;
+  status: string;
+  published: boolean;
+  city: string;
+  state: string;
+  address: string | null;
+  showAddress: boolean;
+  askingPrice: number | null;
+  arv: number | null;
+  repairs: number | null;
+  beds: number | null;
+  baths: number | null;
+  sqft: number | null;
+  description: string | null;
+};
+
+export function parseListing(formData: FormData): ParseResult<ListingInput> {
+  const errors: FieldErrors = {};
+  const title = cleanLine(formData.get("title"), 120);
+  const propertyType = cleanLine(formData.get("property_type"), 40);
+  const status = cleanLine(formData.get("status"), 40);
+  const city = cleanLine(formData.get("city"), 80);
+  const state = cleanLine(formData.get("state"), 2).toUpperCase();
+  const address = cleanLine(formData.get("address"), 160);
+  const description = cleanBlock(formData.get("description"), 2000);
+  if (title.length < 2) add(errors, "title", "Enter a short title.");
+  if (!includesOption(LISTING_TYPES, propertyType)) add(errors, "property_type", "Choose a property type.");
+  if (!includesOption(LISTING_STATUSES, status)) add(errors, "status", "Choose a status.");
+  if (city.length < 2 || !CITY_RE.test(city)) add(errors, "city", "Enter the city.");
+  if (!STATE_NAME.has(state)) add(errors, "state", "Choose a state.");
+  const askingPrice = optionalMoney(errors, "asking_price", cleanLine(formData.get("asking_price"), 20));
+  const arv = optionalMoney(errors, "arv", cleanLine(formData.get("arv"), 20));
+  const repairs = optionalMoney(errors, "estimated_repairs", cleanLine(formData.get("estimated_repairs"), 20));
+  const beds = optionalNumber(errors, "beds", cleanLine(formData.get("beds"), 6), 99);
+  const baths = optionalNumber(errors, "baths", cleanLine(formData.get("baths"), 6), 99);
+  const sqftRaw = cleanLine(formData.get("sqft"), 12).replace(/,/g, "");
+  let sqft: number | null = null;
+  if (sqftRaw) {
+    if (!/^\d{1,7}$/.test(sqftRaw)) add(errors, "sqft", "Enter square feet as a whole number.");
+    else sqft = Number(sqftRaw);
+  }
+  if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
+  return {
+    ok: true,
+    data: {
+      title,
+      propertyType,
+      status,
+      published: formData.get("published") === "yes",
+      city,
+      state,
+      address: address || null,
+      showAddress: formData.get("show_address") === "yes",
+      askingPrice,
+      arv,
+      repairs,
+      beds,
+      baths,
+      sqft,
+      description: description || null,
+    },
+  };
+}
+
+export type InquiryInput = {
+  name: string;
+  phone: string;
+  email: string;
+  message: string | null;
+};
+
+export function parseInquiry(formData: FormData): ParseResult<InquiryInput> {
+  const errors: FieldErrors = {};
+  const name = cleanLine(formData.get("name"), 80);
+  const email = cleanLine(formData.get("email"), 160).toLowerCase();
+  const phoneRaw = cleanLine(formData.get("phone"), 30);
+  const message = cleanBlock(formData.get("message"), 2000);
+  requireName(errors, name);
+  requireEmail(errors, email);
+  const phone = formatPhone(phoneRaw);
+  if (!phone) add(errors, "phone", "Enter a valid 10-digit U.S. phone number.");
+  if (formData.get("tcpa") !== "yes") add(errors, "tcpa", "Consent to be contacted is required.");
+  if (Object.keys(errors).length || !phone) return { ok: false, fieldErrors: errors };
+  return { ok: true, data: { name, phone, email, message: message || null } };
+}
+
+export function parsePipeline(formData: FormData): { status: string; notes: string } | null {
+  const status = cleanLine(formData.get("status"), 40);
+  const notes = cleanBlock(formData.get("notes"), 4000);
+  if (!includesOption(PIPELINE, status)) return null;
+  return { status, notes };
+}
+
+export function parseSettings(formData: FormData): ParseResult<{ email: string; phone: string }> {
+  const errors: FieldErrors = {};
+  const email = cleanLine(formData.get("email"), 160).toLowerCase();
+  const phone = cleanLine(formData.get("phone"), 40);
+  requireEmail(errors, email);
+  if (phone.length < 7 || phone.length > 40) add(errors, "phone", "Enter the phone number visitors should see.");
+  if (Object.keys(errors).length) return { ok: false, fieldErrors: errors };
+  return { ok: true, data: { email, phone } };
 }

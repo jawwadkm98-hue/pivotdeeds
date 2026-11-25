@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { brand, phoneHref, phoneIsLive, socialProfiles } from "@brand";
+import { brand, socialProfiles } from "@brand";
 import { companyLinks, sellLinks } from "@/content/nav";
+import { getSiteContact, phoneTel } from "@/lib/settings";
 import { Disclosure } from "./Disclosure";
 import { Logo } from "./Logo";
 
@@ -11,7 +12,8 @@ const legal = [
   { href: "/admin", label: "Admin" },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const contact = await getSiteContact();
   const social = socialProfiles();
   return (
     <footer className="bg-pine-deep text-ivory">
@@ -21,18 +23,18 @@ export function Footer() {
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory">{brand.tagline}</p>
           <p className="mt-4 text-sm leading-relaxed text-ivory">{brand.serviceArea}</p>
           <p className="mt-4 text-sm">
-            <a className="underline decoration-brass-bright/70 underline-offset-4" href={`mailto:${brand.email}`}>
-              {brand.email}
+            <a className="underline decoration-brass-bright/70 underline-offset-4" href={`mailto:${contact.email}`}>
+              {contact.email}
             </a>
           </p>
           <p className="mt-2 text-sm">
-            {phoneIsLive() ? (
-              <a className="underline decoration-brass-bright/70 underline-offset-4" href={phoneHref()}>
-                {brand.phone}
+            {contact.phoneIsLive ? (
+              <a className="underline decoration-brass-bright/70 underline-offset-4" href={phoneTel(contact.phone)}>
+                {contact.phone}
               </a>
             ) : (
               <>
-                <span>{brand.phone}</span>
+                <span>{contact.phone}</span>
                 <span className="mt-1 block text-brass-bright">Phone line coming soon</span>
               </>
             )}

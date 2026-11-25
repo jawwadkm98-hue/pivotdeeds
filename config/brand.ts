@@ -1,8 +1,9 @@
 /**
  * Crown Wholesalers brand configuration.
  *
- * This is the only place for the company name, phone, email, service area,
- * domain, and social links. Pages read from this file. Do not hardcode them.
+ * This is the place for the company name, default phone, default email, service area,
+ * domain, and social links. The public phone and email can be overridden from
+ * /admin/settings, which stores them in the database.
  *
  * TODO: Replace `phone` with the live business number before launch.
  * TODO: Set `phoneStatus` to "live" once that number can be called and texted.

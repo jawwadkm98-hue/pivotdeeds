@@ -191,14 +191,31 @@ npm ci
 npm run deploy
 ```
 
-A new admin password is `npx wrangler secret put ADMIN_PASSWORD` again. A phone-number change is in `config/brand.ts`, then deploy.
+A new admin password is `npx wrangler secret put ADMIN_PASSWORD` again. The public phone and email are changed in `/admin/settings` and do not need a new deploy.
+
+## Build files for an API upload
+
+`npm run deploy` both builds and publishes. To build without publishing:
+
+```bash
+npx opennextjs-cloudflare build
+```
+
+Upload these paths with the Workers Assets direct-upload flow:
+
+- Worker module: `.open-next/worker.js`
+- Static assets directory: `.open-next/assets`
+
+The Worker metadata still has to include the bindings from `wrangler.jsonc`: D1 `DB`, R2 `PHOTOS`, assets `ASSETS`, and the email binding `NOTIFY_EMAIL`.
+
+After the code is uploaded, apply `migrations/0002_dashboard.sql` to the existing D1 database if it is not already applied. Each line is one statement. Email Routing must already allow `leads@crownwholesalers.com` to send to `crownwholesalersusa@gmail.com`, or new-lead mail is skipped and the form still saves.
 
 ## Project map
 
-- `config/brand.ts` — name, phone, email, service area, social links
-- `wrangler.jsonc` — Worker name, D1 binding `DB`, R2 binding `PHOTOS`
-- `migrations/0001_init.sql` — D1 schema
+- `config/brand.ts` — name, default phone, default email, service area, social links
+- `wrangler.jsonc` — Worker name, D1 `DB`, R2 `PHOTOS`, email `NOTIFY_EMAIL`
+- `migrations/0001_init.sql` and `migrations/0002_dashboard.sql` — D1 schema
 - `src/lib/db.ts` — D1 on Cloudflare, local SQLite everywhere else
-- `src/lib/actions.ts` — form and admin sign-in actions
+- `src/lib/actions.ts` — public form actions
 
-Pages: Home, How it works, Sell, Sell real estate, Sell gold and precious metals, Sell diamonds and jewelry, We buy, Situations, Cash buyers, About, FAQ, Contact, Privacy Policy, Terms of Use, and `/admin`.
+Pages: Home, How it works, Sell, Sell real estate, Sell gold and precious metals, Sell diamonds and jewelry, We buy, Inventory, Situations, Cash buyers, About, FAQ, Contact, Privacy Policy, Terms of Use, and `/admin`.
