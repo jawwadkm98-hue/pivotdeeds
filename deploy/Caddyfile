@@ -1,0 +1,7 @@
+www.pivotdeeds.com {
+	redir https://pivotdeeds.com{uri} permanent
+}
+
+pivotdeeds.com {
+	reverse_proxy 127.0.0.1:3000
+}

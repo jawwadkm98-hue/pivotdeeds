@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+dist
+coverage
+data
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+.DS_Store
+tsconfig.tsbuildinfo
+.vercel
+.turbo

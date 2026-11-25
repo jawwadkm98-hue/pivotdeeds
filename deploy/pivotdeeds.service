@@ -1,0 +1,17 @@
+[Unit]
+Description=PivotDeeds website
+After=network.target
+
+[Service]
+Type=simple
+User=pivot
+Group=pivot
+WorkingDirectory=/var/www/pivotdeeds
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/pivotdeeds.env
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
