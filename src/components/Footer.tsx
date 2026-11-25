@@ -1,18 +1,13 @@
 import Link from "next/link";
 import { brand, phoneHref, phoneIsLive, socialProfiles } from "@brand";
+import { companyLinks, sellLinks } from "@/content/nav";
 import { Disclosure } from "./Disclosure";
 import { Logo } from "./Logo";
-
-const explore = [
-  { href: "/sell", label: "Sell your property" },
-  { href: "/buyers", label: "Cash buyers" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
 
 const legal = [
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Use" },
+  { href: "/faq", label: "FAQ" },
   { href: "/admin", label: "Admin" },
 ];
 
@@ -20,7 +15,7 @@ export function Footer() {
   const social = socialProfiles();
   return (
     <footer className="bg-pine-deep text-cream">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo tone="light" />
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream">{brand.tagline}</p>
@@ -55,9 +50,26 @@ export function Footer() {
           ) : null}
         </div>
         <div>
-          <h2 className="font-serif text-xl text-brass-bright">Explore</h2>
+          <h2 className="font-serif text-xl text-brass-bright">Sell</h2>
           <ul className="mt-4 space-y-2 text-sm">
-            {explore.map((item) => (
+            {sellLinks.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="hover:underline">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link href="/buyers" className="hover:underline">
+                Join the buyers list
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h2 className="font-serif text-xl text-brass-bright">Company</h2>
+          <ul className="mt-4 space-y-2 text-sm">
+            {companyLinks.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="hover:underline">
                   {item.label}

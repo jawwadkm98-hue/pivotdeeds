@@ -1,5 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { toCsv } from "./csv";
-import { getDb } from "./db";
+import { databasePath, getDb } from "./db";
 import { likeQuery } from "./format";
 import type { BuyerInput, ContactInput, SellerInput } from "./validate";
 
@@ -8,19 +10,27 @@ export type RequestMeta = { ip: string; userAgent: string };
 export type SellerLead = {
   id: number;
   created_at: string;
+  asset_category: string;
   name: string;
   phone: string;
   email: string;
-  address: string;
   city: string;
   state: string;
   zip: string;
-  property_type: string;
-  condition: string;
   timeline: string;
   asking_price: number | null;
+  description: string | null;
+  address: string | null;
+  property_type: string | null;
+  condition: string | null;
   reason: string | null;
-  notes: string | null;
+  item_type: string | null;
+  weight: string | null;
+  purity: string | null;
+  certification: string | null;
+  quantity: string | null;
+  photo_count: number;
+  photo_names: string | null;
   tcpa_consent: number;
   ip: string | null;
   user_agent: string | null;
@@ -33,6 +43,7 @@ export type BuyerSignup = {
   phone: string;
   email: string;
   company: string | null;
+  categories: string;
   markets: string;
   property_types: string;
   price_range: string;
@@ -65,19 +76,27 @@ export type LeadPage<T> = {
 const SELLER_HEADERS = [
   "id",
   "created_at",
+  "asset_category",
   "name",
   "phone",
   "email",
-  "address",
   "city",
   "state",
   "zip",
-  "property_type",
-  "condition",
   "timeline",
   "asking_price",
+  "description",
+  "address",
+  "property_type",
+  "condition",
   "reason",
-  "notes",
+  "item_type",
+  "weight",
+  "purity",
+  "certification",
+  "quantity",
+  "photo_count",
+  "photo_names",
   "tcpa_consent",
   "ip",
   "user_agent",
@@ -90,6 +109,7 @@ const BUYER_HEADERS = [
   "phone",
   "email",
   "company",
+  "categories",
   "markets",
   "property_types",
   "price_range",
@@ -106,42 +126,83 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function insertSeller(input: SellerInput, meta: RequestMeta): void {
-  getDb()
+export function uploadDirectory(): string {
+  return path.join(path.dirname(databasePath()), "uploads");
+}
+
+export function insertSeller(input: SellerInput, meta: RequestMeta): number {
+  const result = getDb()
     .prepare(
       `INSERT INTO seller_leads (
-        created_at, name, phone, email, address, city, state, zip,
-        property_type, condition, timeline, asking_price, reason, notes,
+        created_at, asset_category, name, phone, email, city, state, zip,
+        timeline, asking_price, description, address, property_type, condition, reason,
+        item_type, weight, purity, certification, quantity, photo_count,
         tcpa_consent, ip, user_agent
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
     )
     .run(
       nowIso(),
+      input.assetCategory,
       input.name,
       input.phone,
       input.email,
-      input.address,
       input.city,
       input.state,
       input.zip,
-      input.propertyType,
-      input.condition,
       input.timeline,
       input.askingPrice,
+      input.description,
+      input.address,
+      input.propertyType,
+      input.condition,
       input.reason,
-      input.notes,
+      input.itemType,
+      input.weight,
+      input.purity,
+      input.certification,
+      input.quantity,
       meta.ip,
       meta.userAgent,
     );
+  return Number(result.lastInsertRowid);
+}
+
+export function deleteSeller(id: number): void {
+  getDb().prepare("DELETE FROM seller_leads WHERE id = ?").run(id);
+}
+
+export function saveSellerPhotos(leadId: number, files: { ext: string; bytes: Buffer }[]): string[] {
+  const directory = uploadDirectory();
+  fs.mkdirSync(directory, { recursive: true });
+  const names = files.map((file, index) => {
+    const filename = `${leadId}-${index + 1}.${file.ext}`;
+    fs.writeFileSync(path.join(directory, filename), file.bytes);
+    return filename;
+  });
+  if (names.length > 0) {
+    getDb()
+      .prepare("UPDATE seller_leads SET photo_count = ?, photo_names = ? WHERE id = ?")
+      .run(names.length, names.join("; "), leadId);
+  }
+  return names;
+}
+
+export function resolveUpload(filename: string): string | null {
+  if (!/^\d+-\d+\.(jpg|png|webp)$/.test(filename)) return null;
+  const directory = path.resolve(uploadDirectory());
+  const full = path.resolve(directory, filename);
+  if (!full.startsWith(directory + path.sep)) return null;
+  if (!fs.existsSync(full)) return null;
+  return full;
 }
 
 export function insertBuyer(input: BuyerInput, meta: RequestMeta): void {
   getDb()
     .prepare(
       `INSERT INTO buyer_signups (
-        created_at, name, phone, email, company, markets, property_types,
+        created_at, name, phone, email, company, categories, markets, property_types,
         price_range, buy_box, proof_of_funds, tcpa_consent, ip, user_agent
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     )
     .run(
       nowIso(),
@@ -149,6 +210,7 @@ export function insertBuyer(input: BuyerInput, meta: RequestMeta): void {
       input.phone,
       input.email,
       input.company,
+      input.categories,
       input.markets,
       input.propertyTypes,
       input.priceRange,
@@ -204,6 +266,8 @@ const sellerSearch = `WHERE (
   OR address LIKE '%' || ? || '%'
   OR state LIKE '%' || ? || '%'
   OR zip LIKE '%' || ? || '%'
+  OR asset_category LIKE '%' || ? || '%'
+  OR item_type LIKE '%' || ? || '%'
 )`;
 
 export function searchSellers(query: string, page: number, pageSize = 25): LeadPage<SellerLead> {
@@ -218,6 +282,7 @@ const buyerSearch = `WHERE (
   OR company LIKE '%' || ? || '%'
   OR markets LIKE '%' || ? || '%'
   OR property_types LIKE '%' || ? || '%'
+  OR categories LIKE '%' || ? || '%'
 )`;
 
 export function searchBuyers(query: string, page: number, pageSize = 25): LeadPage<BuyerSignup> {

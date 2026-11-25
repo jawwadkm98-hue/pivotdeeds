@@ -8,12 +8,12 @@ import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import "./globals.css";
 
-const description = `${brand.name} buys houses, condos, townhomes, multifamily, land, mobile homes, and commercial property for cash in all 50 states. Request a no-obligation offer or join the cash buyers list.`;
+const description = `${brand.name} is a nationwide cash buyer of real estate, gold, diamonds, jewelry, and other high-value assets. Request a no-obligation offer or join the buyers list.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.siteUrl),
   title: {
-    default: `${brand.name} | Nationwide cash property buyers`,
+    default: `${brand.name} | Nationwide cash buyers`,
     template: `%s | ${brand.name}`,
   },
   description,
@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: brand.name,
-    title: `${brand.name} | Nationwide cash property buyers`,
+    title: `${brand.name} | Nationwide cash buyers`,
     description,
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${brand.name} | Nationwide cash property buyers`,
+    title: `${brand.name} | Nationwide cash buyers`,
     description,
   },
   robots: { index: true, follow: true },
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1C3B2E",
+  themeColor: "#162033",
   width: "device-width",
   initialScale: 1,
 };

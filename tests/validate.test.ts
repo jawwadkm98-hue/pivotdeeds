@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { STATES } from "../src/lib/constants.ts";
 import { csvCell, toCsv } from "../src/lib/csv.ts";
-import { honeypotTripped, isTooFast, parseBuyer, parseContact, parseSeller } from "../src/lib/validate.ts";
+import { honeypotTripped, isTooFast, parseBuyer, parseContact, parseSeller, photoError } from "../src/lib/validate.ts";
 
 function sellerForm(overrides: Record<string, string> = {}, omit: string[] = []) {
   const values: Record<string, string> = {
+    asset_category: "real_estate",
     name: "Ada Lovelace",
     phone: "(202) 555-0148",
     email: "Ada@Example.com",
@@ -18,7 +19,7 @@ function sellerForm(overrides: Record<string, string> = {}, omit: string[] = [])
     timeline: "Within 30 days",
     asking_price: "$250,000",
     reason: "Inherited property",
-    notes: "Estate sale, vacant.",
+    description: "Estate sale, vacant.",
     tcpa: "yes",
     ...overrides,
   };
@@ -69,6 +70,7 @@ test("seller form rejects a missing consent box, a bad phone, and a bad ZIP", ()
 
 test("buyer form requires markets, a buy box, proof of funds, and consent", () => {
   const form = new FormData();
+  form.append("categories", "real_estate");
   form.set("name", "Grace Hopper");
   form.set("phone", "4155550199");
   form.set("email", "grace@example.com");
@@ -117,6 +119,61 @@ test("contact form allows a blank phone and requires a real message", () => {
 
   form.set("message", "too short");
   assert.equal(parseContact(form).ok, false);
+});
+
+test("metals require a description and a known item type", () => {
+  const form = new FormData();
+  form.set("asset_category", "precious_metals");
+  form.set("name", "Ada Lovelace");
+  form.set("phone", "(202) 555-0148");
+  form.set("email", "ada@example.com");
+  form.set("city", "Baltimore");
+  form.set("state", "MD");
+  form.set("zip", "21201");
+  form.set("timeline", "Within 30 days");
+  form.set("item_type", "Gold coins");
+  form.set("weight", "2 oz");
+  form.set("purity", "22k");
+  form.set("description", "Two gold coins in a flip.");
+  form.set("tcpa", "yes");
+  const parsed = parseSeller(form);
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    assert.equal(parsed.data.assetCategory, "precious_metals");
+    assert.equal(parsed.data.address, null);
+  }
+  form.set("description", "short");
+  assert.equal(parseSeller(form).ok, false);
+});
+
+test("photo rules reject the wrong type and a fourth file", () => {
+  assert.equal(photoError([]), null);
+  assert.equal(photoError([{ type: "image/gif", size: 100 }]), "Photos must be JPG, PNG, or WebP.");
+  assert.equal(
+    photoError([
+      { type: "image/jpeg", size: 10 },
+      { type: "image/png", size: 10 },
+      { type: "image/webp", size: 10 },
+      { type: "image/jpeg", size: 10 },
+    ]),
+    "You can attach up to 3 photos.",
+  );
+});
+
+test("a buyer who only wants gold does not need property types", () => {
+  const form = new FormData();
+  form.set("name", "Grace Hopper");
+  form.set("phone", "4155550199");
+  form.set("email", "grace@example.com");
+  form.append("categories", "precious_metals");
+  form.set("market_scope", "nationwide");
+  form.set("price_range", "Any price");
+  form.set("buy_box", "US gold coins and bars only.");
+  form.set("proof_of_funds", "yes");
+  form.set("tcpa", "yes");
+  const parsed = parseBuyer(form);
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) assert.match(parsed.data.categories, /Gold/);
 });
 
 test("honeypot and too-fast traps", () => {

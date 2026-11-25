@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { brand } from "@brand";
-import { PRICE_RANGES, PROPERTY_TYPES, STATES } from "@/lib/constants";
+import { ASSET_CATEGORIES, PRICE_RANGES, PROPERTY_TYPES, STATES } from "@/lib/constants";
 import { submitBuyer } from "@/lib/actions";
 import { checked, idleState, valueOf } from "@/lib/form-state";
 import { Field, FormAlert } from "./fields";
@@ -65,6 +65,22 @@ export function BuyerForm() {
         </Field>
       </fieldset>
 
+      <fieldset className="mt-8" id="categories">
+        <legend className="font-serif text-2xl">
+          Categories <span className="text-brass">*</span>
+        </legend>
+        <p className="mt-2 text-sm leading-relaxed text-moss">Choose every line you actually buy. We can add more categories later without a new signup form.</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {ASSET_CATEGORIES.map((item) => (
+            <label key={item.id} className="flex items-center gap-2 rounded-2xl border border-sand px-3 py-2 text-sm has-[:checked]:border-pine has-[:checked]:bg-cream">
+              <input type="checkbox" name="categories" value={item.id} defaultChecked={checked(state, "categories", item.id)} className="h-4 w-4 accent-pine" />
+              {item.label}
+            </label>
+          ))}
+        </div>
+        {state.fieldErrors.categories ? <p className="mt-2 text-sm font-medium text-danger">{state.fieldErrors.categories}</p> : null}
+      </fieldset>
+
       <fieldset className="market-picker mt-8" id="markets">
         <legend className="font-serif text-2xl">Markets</legend>
         <p className="mt-2 text-sm leading-relaxed text-moss">
@@ -111,9 +127,8 @@ export function BuyerForm() {
       </fieldset>
 
       <fieldset className="mt-8" id="property_types">
-        <legend className="font-serif text-2xl">
-          Property types <span className="text-ember">*</span>
-        </legend>
+        <legend className="font-serif text-2xl">Property types</legend>
+        <p className="mt-2 text-sm text-moss">Required when real estate is one of your categories.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {PROPERTY_TYPES.map((type) => (
             <label key={type} className="flex items-center gap-2 rounded-2xl border border-sand px-3 py-2 text-sm has-[:checked]:border-pine has-[:checked]:bg-cream">
@@ -151,7 +166,7 @@ export function BuyerForm() {
 
       <fieldset className="mt-8" id="proof_of_funds">
         <legend className="font-serif text-2xl">
-          Proof of funds available <span className="text-ember">*</span>
+          Proof of funds available <span className="text-brass">*</span>
         </legend>
         <p className="mt-2 text-sm leading-relaxed text-moss">
           Yes means you can show funds or a credit line if we ask before sharing an address. No does not block you from joining the list.

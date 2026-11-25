@@ -14,7 +14,7 @@ FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_PATH=/data/pivotdeeds.sqlite
+ENV DATABASE_PATH=/data/crownwholesalers.sqlite
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 RUN mkdir -p /data && chown node:node /data

@@ -1,29 +1,41 @@
 import {
+  CERTIFICATIONS,
   CONDITIONS,
+  JEWELRY_ITEMS,
+  METAL_ITEMS,
   PRICE_RANGES,
   PROPERTY_TYPES,
   REASONS,
   STATE_NAME,
   TIMELINES,
+  categoryLabel,
   includesOption,
+  isAssetCategory,
+  type AssetCategoryId,
 } from "./constants";
 
 export type FieldErrors = Record<string, string>;
 
 export type SellerInput = {
+  assetCategory: AssetCategoryId;
   name: string;
   phone: string;
   email: string;
-  address: string;
   city: string;
   state: string;
   zip: string;
-  propertyType: string;
-  condition: string;
   timeline: string;
   askingPrice: number | null;
+  description: string | null;
+  address: string | null;
+  propertyType: string | null;
+  condition: string | null;
   reason: string | null;
-  notes: string | null;
+  itemType: string | null;
+  weight: string | null;
+  purity: string | null;
+  certification: string | null;
+  quantity: string | null;
 };
 
 export type BuyerInput = {
@@ -31,12 +43,31 @@ export type BuyerInput = {
   phone: string;
   email: string;
   company: string | null;
+  categories: string;
   markets: string;
   propertyTypes: string;
   priceRange: string;
   buyBox: string;
   proofOfFunds: "yes" | "no";
 };
+
+export const MAX_PHOTOS = 3;
+export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+export const PHOTO_TYPES: Record<string, "jpg" | "png" | "webp"> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+export function photoError(files: { type: string; size: number }[]): string | null {
+  const attached = files.filter((file) => file.size > 0);
+  if (attached.length > MAX_PHOTOS) return `You can attach up to ${MAX_PHOTOS} photos.`;
+  for (const file of attached) {
+    if (!PHOTO_TYPES[file.type]) return "Photos must be JPG, PNG, or WebP.";
+    if (file.size > MAX_PHOTO_BYTES) return "Each photo must be 4 MB or smaller.";
+  }
+  return null;
+}
 
 export type ContactInput = {
   name: string;
@@ -110,30 +141,26 @@ export function isTooFast(value: FormDataEntryValue | null, now = Date.now()): b
 
 export function parseSeller(formData: FormData): ParseResult<SellerInput> {
   const errors: FieldErrors = {};
+  const assetCategoryRaw = cleanLine(formData.get("asset_category"), 40);
   const name = cleanLine(formData.get("name"), 80);
   const phone = formatPhone(cleanLine(formData.get("phone"), 30));
   const email = cleanLine(formData.get("email"), 160).toLowerCase();
-  const address = cleanLine(formData.get("address"), 180);
   const city = cleanLine(formData.get("city"), 80);
   const state = cleanLine(formData.get("state"), 2).toUpperCase();
   const zip = cleanLine(formData.get("zip"), 10);
-  const propertyType = cleanLine(formData.get("property_type"), 40);
-  const condition = cleanLine(formData.get("condition"), 80);
   const timeline = cleanLine(formData.get("timeline"), 80);
   const askingRaw = cleanLine(formData.get("asking_price"), 20);
-  const reasonRaw = cleanLine(formData.get("reason"), 80);
-  const notes = cleanBlock(formData.get("notes"), 4000);
+  const description = cleanBlock(formData.get("description"), 4000);
   const tcpa = formData.get("tcpa");
 
+  if (!isAssetCategory(assetCategoryRaw)) add(errors, "asset_category", "Choose what you want to sell.");
+  const assetCategory = isAssetCategory(assetCategoryRaw) ? assetCategoryRaw : null;
   requireName(errors, name);
   if (!phone) add(errors, "phone", "Enter a valid 10-digit U.S. phone number.");
   requireEmail(errors, email);
-  if (address.length < 5) add(errors, "address", "Enter the street address.");
   if (city.length < 2 || !CITY_RE.test(city)) add(errors, "city", "Enter the city.");
   if (!STATE_NAME.has(state)) add(errors, "state", "Choose a state.");
   if (!ZIP_RE.test(zip)) add(errors, "zip", "Enter a 5-digit ZIP code.");
-  if (!includesOption(PROPERTY_TYPES, propertyType)) add(errors, "property_type", "Choose a property type.");
-  if (!includesOption(CONDITIONS, condition)) add(errors, "condition", "Choose the condition.");
   if (!includesOption(TIMELINES, timeline)) add(errors, "timeline", "Choose a timeline.");
 
   let askingPrice: number | null = null;
@@ -151,34 +178,93 @@ export function parseSeller(formData: FormData): ParseResult<SellerInput> {
     }
   }
 
+  let address: string | null = null;
+  let propertyType: string | null = null;
+  let condition: string | null = null;
   let reason: string | null = null;
-  if (reasonRaw) {
-    if (!includesOption(REASONS, reasonRaw)) add(errors, "reason", "Choose a reason from the list.");
-    else reason = reasonRaw;
+  let itemType: string | null = null;
+  let weight: string | null = null;
+  let purity: string | null = null;
+  let certification: string | null = null;
+  let quantity: string | null = null;
+
+  if (assetCategory === "real_estate") {
+    const addressRaw = cleanLine(formData.get("address"), 180);
+    const propertyRaw = cleanLine(formData.get("property_type"), 40);
+    const conditionRaw = cleanLine(formData.get("condition"), 80);
+    const reasonRaw = cleanLine(formData.get("reason"), 80);
+    if (addressRaw.length < 5) add(errors, "address", "Enter the street address.");
+    else address = addressRaw;
+    if (!includesOption(PROPERTY_TYPES, propertyRaw)) add(errors, "property_type", "Choose a property type.");
+    else propertyType = propertyRaw;
+    if (!includesOption(CONDITIONS, conditionRaw)) add(errors, "condition", "Choose the condition.");
+    else condition = conditionRaw;
+    if (reasonRaw) {
+      if (!includesOption(REASONS, reasonRaw)) add(errors, "reason", "Choose a reason from the list.");
+      else reason = reasonRaw;
+    }
+  }
+
+  if (assetCategory === "precious_metals" || assetCategory === "jewelry" || assetCategory === "other") {
+    if (description.length < 10) {
+      add(errors, "description", "Describe the item in at least 10 characters.");
+    }
+    const quantityRaw = cleanLine(formData.get("quantity"), 40);
+    quantity = quantityRaw || null;
+  }
+
+  if (assetCategory === "precious_metals") {
+    const itemRaw = cleanLine(formData.get("item_type"), 40);
+    if (!includesOption(METAL_ITEMS, itemRaw)) add(errors, "item_type", "Choose the type of metal.");
+    else itemType = itemRaw;
+    weight = cleanLine(formData.get("weight"), 40) || null;
+    purity = cleanLine(formData.get("purity"), 40) || null;
+  }
+
+  if (assetCategory === "jewelry") {
+    const itemRaw = cleanLine(formData.get("item_type"), 40);
+    const certRaw = cleanLine(formData.get("certification"), 40);
+    if (!includesOption(JEWELRY_ITEMS, itemRaw)) add(errors, "item_type", "Choose the type of jewelry or stone.");
+    else itemType = itemRaw;
+    purity = cleanLine(formData.get("purity"), 40) || null;
+    if (certRaw) {
+      if (!includesOption(CERTIFICATIONS, certRaw)) add(errors, "certification", "Choose a certification, or leave it blank.");
+      else certification = certRaw;
+    }
+  }
+
+  if (assetCategory === "other") {
+    itemType = cleanLine(formData.get("item_type"), 80) || null;
   }
 
   if (tcpa !== "yes") {
     add(errors, "tcpa", "Check the box to consent to calls and texts. It is required to submit this form.");
   }
 
-  if (Object.keys(errors).length || !phone) return { ok: false, fieldErrors: errors };
+  if (Object.keys(errors).length || !phone || !assetCategory) return { ok: false, fieldErrors: errors };
 
   return {
     ok: true,
     data: {
+      assetCategory,
       name,
       phone,
       email,
-      address,
       city,
       state,
       zip,
-      propertyType,
-      condition,
       timeline,
       askingPrice,
+      description: description || null,
+      address,
+      propertyType,
+      condition,
       reason,
-      notes: notes || null,
+      itemType,
+      weight,
+      purity,
+      certification,
+      quantity,
     },
   };
 }
@@ -227,6 +313,17 @@ export function parseBuyer(formData: FormData): ParseResult<BuyerInput> {
     add(errors, "markets", "Choose nationwide or specific states.");
   }
 
+  const selectedCategories = [
+    ...new Set(
+      formData
+        .getAll("categories")
+        .slice(0, 12)
+        .map((item) => cleanLine(item, 40)),
+    ),
+  ].filter((item) => isAssetCategory(item));
+  if (selectedCategories.length === 0) add(errors, "categories", "Choose at least one category.");
+
+  const wantsRealEstate = selectedCategories.includes("real_estate");
   const types = [
     ...new Set(
       formData
@@ -235,7 +332,9 @@ export function parseBuyer(formData: FormData): ParseResult<BuyerInput> {
         .map((item) => cleanLine(item, 40)),
     ),
   ].filter((item) => includesOption(PROPERTY_TYPES, item));
-  if (types.length === 0) add(errors, "property_types", "Choose at least one property type.");
+  if (wantsRealEstate && types.length === 0) {
+    add(errors, "property_types", "Choose at least one property type.");
+  }
 
   if (!includesOption(PRICE_RANGES, priceRange)) add(errors, "price_range", "Choose a price range.");
   if (buyBox.length < 10) {
@@ -258,6 +357,7 @@ export function parseBuyer(formData: FormData): ParseResult<BuyerInput> {
       phone,
       email,
       company,
+      categories: selectedCategories.map((id) => (isAssetCategory(id) ? categoryLabel(id) : id)).join("; "),
       markets,
       propertyTypes: types.join("; "),
       priceRange,

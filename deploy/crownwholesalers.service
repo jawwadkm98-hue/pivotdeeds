@@ -1,14 +1,14 @@
 [Unit]
-Description=PivotDeeds website
+Description=Crown Wholesalers website
 After=network.target
 
 [Service]
 Type=simple
-User=pivot
-Group=pivot
-WorkingDirectory=/var/www/pivotdeeds
+User=crown
+Group=crown
+WorkingDirectory=/var/www/crownwholesalers
 Environment=NODE_ENV=production
-EnvironmentFile=/etc/pivotdeeds.env
+EnvironmentFile=/etc/crownwholesalers.env
 ExecStart=/usr/bin/npm start
 Restart=on-failure
 RestartSec=5

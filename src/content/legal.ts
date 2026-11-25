@@ -5,7 +5,7 @@ export const legalUpdated = "November 25, 2026";
 export const disclosures = [
   {
     id: "not-a-broker",
-    text: `${brand.name} is a real estate investor and cash buyer. We are not a licensed real estate broker or agent in any state, and we do not represent sellers or buyers as their agent. We buy properties for our own account.`,
+    text: `${brand.name} is a cash buyer of real estate and of high-value assets such as gold, diamonds, and jewelry. For real estate, we are an investor buying for our own account. We are not a licensed real estate broker or agent in any state, and we do not represent sellers or buyers as their agent. We do not claim any professional license on this website.`,
   },
   {
     id: "assignment",
@@ -22,5 +22,9 @@ export const disclosures = [
   {
     id: "fair-housing",
     text: "We follow the federal Fair Housing Act. We do not discriminate based on race, color, religion, sex, disability, familial status, national origin, or any other characteristic protected by applicable law.",
+  },
+  {
+    id: "precious-metals",
+    text: "Purchases of precious metals, diamonds, and jewelry are made in line with applicable state and local secondhand-dealer and precious-metals laws. A completed purchase may require a valid government-issued photo ID and other information those laws demand. This website does not claim that we hold any dealer, pawn, broker, or other license.",
   },
 ] as const;

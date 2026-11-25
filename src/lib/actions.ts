@@ -11,11 +11,12 @@ import {
   sessionCookieOptions,
 } from "./auth";
 import { errorState, formValues, successState, type FormState, type LoginState } from "./form-state";
-import { insertBuyer, insertMessage, insertSeller, type RequestMeta } from "./leads";
+import { deleteSeller, insertBuyer, insertMessage, insertSeller, saveSellerPhotos, type RequestMeta } from "./leads";
 import { LEAD_LIMIT, LEAD_WINDOW_MS, LOGIN_LIMIT, LOGIN_WINDOW_MS, consumeRate } from "./rate-limit";
-import { honeypotTripped, isTooFast, parseBuyer, parseContact, parseSeller } from "./validate";
+import { PHOTO_TYPES, honeypotTripped, isTooFast, parseBuyer, parseContact, parseSeller, photoError } from "./validate";
 
 const SELLER_KEYS = [
+  "asset_category",
   "name",
   "phone",
   "email",
@@ -28,7 +29,12 @@ const SELLER_KEYS = [
   "timeline",
   "asking_price",
   "reason",
-  "notes",
+  "description",
+  "item_type",
+  "weight",
+  "purity",
+  "certification",
+  "quantity",
   "tcpa",
 ] as const;
 
@@ -37,6 +43,7 @@ const BUYER_KEYS = [
   "phone",
   "email",
   "company",
+  "categories",
   "market_scope",
   "markets",
   "property_types",
@@ -62,7 +69,7 @@ function trapped(formData: FormData, ip: string): boolean {
   return true;
 }
 
-const sellerSuccess = `We received your property information. We will review it and follow up at the email or phone you provided. There is no obligation to accept an offer.`;
+const sellerSuccess = `We received your information. We will review it and follow up at the email or phone you provided. There is no obligation to accept an offer.`;
 const buyerSuccess = `You are on the ${brand.name} cash buyers list. We will contact you when a property fits what you described. Joining the list does not reserve a property or guarantee that one will be offered.`;
 const contactSuccess = `We received your message and will reply at the email you provided.`;
 
@@ -78,12 +85,26 @@ export async function submitSeller(_prev: FormState, formData: FormData): Promis
   if (!parsed.ok) {
     return errorState("Please fix the highlighted fields.", parsed.fieldErrors, values);
   }
+  const photoEntries = formData
+    .getAll("photos")
+    .filter((item): item is File => item instanceof File && item.size > 0);
+  const photoProblem = photoError(photoEntries.map((file) => ({ type: file.type, size: file.size })));
+  if (photoProblem) {
+    return errorState(photoProblem, { photos: photoProblem }, values);
+  }
   if (!consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS)) {
     return errorState(rateMessage(), {}, values);
   }
+  let leadId = 0;
   try {
-    insertSeller(parsed.data, meta);
+    leadId = insertSeller(parsed.data, meta);
+    const files = [];
+    for (const file of photoEntries) {
+      files.push({ ext: PHOTO_TYPES[file.type], bytes: Buffer.from(await file.arrayBuffer()) });
+    }
+    saveSellerPhotos(leadId, files);
   } catch (error) {
+    if (leadId) deleteSeller(leadId);
     console.error("seller insert failed", error instanceof Error ? error.message : "unknown");
     return errorState(`Something went wrong saving your request. Email ${brand.email} and we will take it from there.`, {}, values);
   }

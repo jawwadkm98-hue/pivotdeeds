@@ -7,7 +7,7 @@ export const LOGIN_LIMIT = 8;
 export const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 function hashIp(ip: string): string {
-  const salt = process.env.ADMIN_SESSION_SECRET || "pivotdeeds-rate-limit";
+  const salt = process.env.ADMIN_SESSION_SECRET || "crownwholesalers-rate-limit";
   return createHash("sha256").update(`${salt}|${ip}`).digest("hex");
 }
 

@@ -17,7 +17,7 @@ export default function TermsPage() {
 
       <h2>Who we are</h2>
       <p>
-        {brand.name} is a real estate investor and cash buyer. We are not a licensed real estate broker or agent, and we do not represent sellers or buyers as their agent. We buy properties for our own account. Contact: <a href={`mailto:${brand.email}`}>{brand.email}</a>. Service area: {brand.serviceArea}.
+        {brand.name} is a cash buyer of real estate, precious metals, jewelry, and other high-value assets. We are not a licensed real estate broker or agent, and we do not represent sellers or buyers as their agent. We do not claim any professional, pawn, or dealer license on this website. Contact: <a href={`mailto:${brand.email}`}>{brand.email}</a>. Service area: {brand.serviceArea}.
       </p>
 
       <h2>No obligation</h2>
@@ -28,6 +28,11 @@ export default function TermsPage() {
       <h2>Assignment and resale</h2>
       <p>
         We may assign our purchase contract to another buyer or resell a property for a profit. We disclose that before you are asked to sign, and we provide any additional written disclosure required by the state where the property is located. Maryland Real Property § 10-715 is one example. For certain owner-occupied residential property of one to four units, that statute requires a wholesale buyer to disclose in writing, before the contract is signed, that the contract may be assigned. It also requires a person assigning that kind of contract to tell the assignee, before the assignment, that the assignor holds an equitable interest and may not be able to convey title. If the required notice is missing and the contract is assigned, the statute gives cancellation rights before closing. This page is not that written disclosure and is not a complete statement of Maryland law or of any other state’s law.
+      </p>
+
+      <h2>Precious metals and jewelry</h2>
+      <p>
+        Purchases of gold, other precious metals, diamonds, and jewelry are made in compliance with applicable state and local secondhand-dealer and precious-metals laws. Those laws may require a valid government-issued photo ID and other records at the time of the transaction. Submitting this form does not complete a purchase and does not collect that ID. Nothing here is a claim that we hold a specific license.
       </p>
 
       <h2>Not a foreclosure consultant</h2>

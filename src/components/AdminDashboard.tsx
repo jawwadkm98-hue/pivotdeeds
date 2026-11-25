@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/lib/actions";
+import { categoryLabel } from "@/lib/constants";
 import { formatMoney, formatTimestamp } from "@/lib/format";
 import {
   leadCounts,
@@ -112,6 +113,52 @@ export function AdminDashboard({ tab, query, page }: { tab: Tab; query: string; 
   );
 }
 
+function PhotoLinks({ names }: { names: string | null }) {
+  const files = (names ?? "").split("; ").filter(Boolean);
+  if (files.length === 0) return null;
+  return (
+    <p className="mt-1 text-xs">
+      Photos:{" "}
+      {files.map((name, index) => (
+        <span key={name}>
+          {index > 0 ? ", " : ""}
+          <a className="underline" href={`/admin/file?name=${encodeURIComponent(name)}`}>
+            {name}
+          </a>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+function SellerBody({ row }: { row: SellerLead }) {
+  const specs = [row.weight, row.purity, row.quantity, row.certification].filter(Boolean).join(" · ");
+  return (
+    <>
+      <p className="font-semibold text-brass">{categoryLabel(row.asset_category)}</p>
+      {row.address ? <p>{row.address}</p> : null}
+      <p>
+        {row.city}, {row.state} {row.zip}
+      </p>
+      {row.property_type ? (
+        <p className="text-moss">
+          {row.property_type}
+          {row.condition ? ` · ${row.condition}` : ""}
+        </p>
+      ) : null}
+      {row.item_type ? <p>{row.item_type}</p> : null}
+      {specs ? <p className="text-moss">{specs}</p> : null}
+      <p>{row.timeline}</p>
+      <p>
+        {formatMoney(row.asking_price)}
+        {row.reason ? ` · ${row.reason}` : ""}
+      </p>
+      {row.description ? <p className="mt-1 whitespace-pre-wrap">{row.description}</p> : null}
+      <PhotoLinks names={row.photo_names} />
+    </>
+  );
+}
+
 function Empty({ text }: { text: string }) {
   return <p className="mt-6 rounded-3xl border border-dashed border-sand bg-paper p-8 text-moss">{text}</p>;
 }
@@ -128,7 +175,7 @@ function SellerResults({ page }: { page: { rows: SellerLead[] } }) {
             <tr className="border-b border-sand text-moss">
               <th className="py-2 pr-3 font-medium">When</th>
               <th className="py-2 pr-3 font-medium">Contact</th>
-              <th className="py-2 pr-3 font-medium">Property</th>
+              <th className="py-2 pr-3 font-medium">Asset</th>
               <th className="py-2 pr-3 font-medium">Details</th>
             </tr>
           </thead>
@@ -147,20 +194,10 @@ function SellerResults({ page }: { page: { rows: SellerLead[] } }) {
                   </a>
                 </td>
                 <td className="py-3 pr-3">
-                  {row.address}
-                  <div>
-                    {row.city}, {row.state} {row.zip}
-                  </div>
-                  <div className="text-moss">
-                    {row.property_type} · {row.condition}
-                  </div>
+                  <SellerBody row={row} />
                 </td>
                 <td className="py-3">
-                  <div>{row.timeline}</div>
-                  <div>{formatMoney(row.asking_price)}</div>
-                  {row.reason ? <div>{row.reason}</div> : null}
-                  {row.notes ? <p className="mt-1 whitespace-pre-wrap text-moss">{row.notes}</p> : null}
-                  <p className="mt-1 text-xs text-moss">IP {row.ip || "unknown"}</p>
+                  <p className="text-xs text-moss">IP {row.ip || "unknown"}</p>
                 </td>
               </tr>
             ))}
@@ -176,14 +213,9 @@ function SellerResults({ page }: { page: { rows: SellerLead[] } }) {
             <p className="mt-1 font-semibold">{row.name}</p>
             <p>{row.phone}</p>
             <p className="break-all">{row.email}</p>
-            <p className="mt-2">
-              {row.address}, {row.city}, {row.state} {row.zip}
-            </p>
-            <p className="text-moss">
-              {row.property_type} · {row.condition} · {row.timeline}
-            </p>
-            <p>{formatMoney(row.asking_price)}{row.reason ? ` · ${row.reason}` : ""}</p>
-            {row.notes ? <p className="mt-2 whitespace-pre-wrap">{row.notes}</p> : null}
+            <div className="mt-2">
+              <SellerBody row={row} />
+            </div>
           </li>
         ))}
       </ul>
@@ -220,9 +252,10 @@ function BuyerResults({ page }: { page: { rows: BuyerSignup[] } }) {
                   </a>
                 </td>
                 <td className="py-3">
+                  <div>{row.categories}</div>
                   <div>{row.markets}</div>
                   <div className="text-moss">
-                    {row.property_types} · {row.price_range}
+                    {row.property_types || "No property types"} · {row.price_range}
                   </div>
                   <div>Proof of funds: {row.proof_of_funds}</div>
                   <p className="mt-1 whitespace-pre-wrap">{row.buy_box}</p>
@@ -242,9 +275,10 @@ function BuyerResults({ page }: { page: { rows: BuyerSignup[] } }) {
             {row.company ? <p>{row.company}</p> : null}
             <p>{row.phone}</p>
             <p className="break-all">{row.email}</p>
-            <p className="mt-2">{row.markets}</p>
+            <p className="mt-2">{row.categories}</p>
+            <p>{row.markets}</p>
             <p className="text-moss">
-              {row.property_types} · {row.price_range} · Funds: {row.proof_of_funds}
+              {row.property_types || "No property types"} · {row.price_range} · Funds: {row.proof_of_funds}
             </p>
             <p className="mt-2 whitespace-pre-wrap">{row.buy_box}</p>
           </li>

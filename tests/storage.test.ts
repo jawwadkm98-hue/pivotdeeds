@@ -6,7 +6,7 @@ import test from "node:test";
 import { parseSeller } from "../src/lib/validate.ts";
 
 test("sqlite stores a seller lead, searches it, exports csv, and rate limits", async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pivotdeeds-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "crownwholesalers-"));
   process.env.DATABASE_PATH = path.join(dir, "test.sqlite");
   const { closeDb, getDb } = await import("../src/lib/db.ts");
   const { consumeRate } = await import("../src/lib/rate-limit.ts");
@@ -16,6 +16,7 @@ test("sqlite stores a seller lead, searches it, exports csv, and rate limits", a
     const parsed = parseSeller(
       (() => {
         const form = new FormData();
+        form.set("asset_category", "real_estate");
         form.set("name", "Ada Lovelace");
         form.set("phone", "2025550148");
         form.set("email", "ada@example.com");
@@ -26,7 +27,7 @@ test("sqlite stores a seller lead, searches it, exports csv, and rate limits", a
         form.set("property_type", "House");
         form.set("condition", "Fair, needs some work");
         form.set("timeline", "Within 30 days");
-        form.set("notes", "=1+1 keep");
+        form.set("description", "=1+1 keep");
         form.set("tcpa", "yes");
         return form;
       })(),

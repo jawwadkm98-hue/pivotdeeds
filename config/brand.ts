@@ -1,5 +1,5 @@
 /**
- * PivotDeeds brand configuration.
+ * Crown Wholesalers brand configuration.
  *
  * This is the only place for the company name, phone, email, service area,
  * domain, and social links. Pages read from this file. Do not hardcode them.
@@ -10,12 +10,12 @@
  */
 
 export const brand = {
-  name: "PivotDeeds",
-  domain: "pivotdeeds.com",
-  siteUrl: "https://pivotdeeds.com",
-  tagline: "Sell your property. Pivot to cash.",
+  name: "Crown Wholesalers",
+  domain: "crownwholesalers.com",
+  siteUrl: "https://crownwholesalers.com",
+  tagline: "Cash for property, gold, and fine jewelry.",
   email: "jawwad@wmbre.com",
-  // TODO: Replace this placeholder with the real PivotDeeds phone number.
+  // TODO: Replace this placeholder with the real Crown Wholesalers phone number.
   phone: "(000) 000-0000",
   // TODO: Change to "live" after `phone` is a working number.
   phoneStatus: "placeholder" as "placeholder" | "live",

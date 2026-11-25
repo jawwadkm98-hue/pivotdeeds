@@ -1,8 +1,8 @@
 {
-  "name": "pivotdeeds",
+  "name": "crownwholesalers",
   "version": "1.0.0",
   "private": true,
-  "description": "PivotDeeds — nationwide cash property buyers",
+  "description": "Crown Wholesalers — nationwide cash buyers of real estate, gold, and jewelry",
   "engines": {
     "node": ">=22"
   },

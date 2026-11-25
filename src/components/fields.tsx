@@ -39,7 +39,7 @@ export function Field({
         {label}
         {required ? (
           <>
-            <span aria-hidden="true" className="text-ember">
+            <span aria-hidden="true" className="text-brass">
               {" "}
               *
             </span>

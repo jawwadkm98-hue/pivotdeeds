@@ -2,23 +2,61 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 
+const SELLER_TABLE = `
+CREATE TABLE seller_leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  asset_category TEXT NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip TEXT NOT NULL,
+  timeline TEXT NOT NULL,
+  asking_price INTEGER,
+  description TEXT,
+  address TEXT,
+  property_type TEXT,
+  condition TEXT,
+  reason TEXT,
+  item_type TEXT,
+  weight TEXT,
+  purity TEXT,
+  certification TEXT,
+  quantity TEXT,
+  photo_count INTEGER NOT NULL DEFAULT 0,
+  photo_names TEXT,
+  tcpa_consent INTEGER NOT NULL,
+  ip TEXT,
+  user_agent TEXT
+)`;
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS seller_leads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   created_at TEXT NOT NULL,
+  asset_category TEXT NOT NULL,
   name TEXT NOT NULL,
   phone TEXT NOT NULL,
   email TEXT NOT NULL,
-  address TEXT NOT NULL,
   city TEXT NOT NULL,
   state TEXT NOT NULL,
   zip TEXT NOT NULL,
-  property_type TEXT NOT NULL,
-  condition TEXT NOT NULL,
   timeline TEXT NOT NULL,
   asking_price INTEGER,
+  description TEXT,
+  address TEXT,
+  property_type TEXT,
+  condition TEXT,
   reason TEXT,
-  notes TEXT,
+  item_type TEXT,
+  weight TEXT,
+  purity TEXT,
+  certification TEXT,
+  quantity TEXT,
+  photo_count INTEGER NOT NULL DEFAULT 0,
+  photo_names TEXT,
   tcpa_consent INTEGER NOT NULL,
   ip TEXT,
   user_agent TEXT
@@ -31,6 +69,7 @@ CREATE TABLE IF NOT EXISTS buyer_signups (
   phone TEXT NOT NULL,
   email TEXT NOT NULL,
   company TEXT,
+  categories TEXT NOT NULL,
   markets TEXT NOT NULL,
   property_types TEXT NOT NULL,
   price_range TEXT NOT NULL,
@@ -69,7 +108,38 @@ CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages (created_at);
 let db: Database.Database | null = null;
 
 export function databasePath(): string {
-  return process.env.DATABASE_PATH || path.join(process.cwd(), "data", "pivotdeeds.sqlite");
+  return process.env.DATABASE_PATH || path.join(process.cwd(), "data", "crownwholesalers.sqlite");
+}
+
+function columnNames(instance: Database.Database, table: string): string[] {
+  const rows = instance.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  return rows.map((row) => row.name);
+}
+
+function migrate(instance: Database.Database) {
+  const seller = columnNames(instance, "seller_leads");
+  if (seller.length > 0 && !seller.includes("asset_category")) {
+    instance.exec("ALTER TABLE seller_leads RENAME TO seller_leads_legacy");
+    instance.exec(SELLER_TABLE);
+    instance.exec(`
+      INSERT INTO seller_leads (
+        id, created_at, asset_category, name, phone, email, city, state, zip,
+        timeline, asking_price, description, address, property_type, condition, reason,
+        photo_count, tcpa_consent, ip, user_agent
+      )
+      SELECT
+        id, created_at, 'real_estate', name, phone, email, city, state, zip,
+        timeline, asking_price, notes, address, property_type, condition, reason,
+        0, tcpa_consent, ip, user_agent
+      FROM seller_leads_legacy
+    `);
+    instance.exec("DROP TABLE seller_leads_legacy");
+  }
+
+  const buyers = columnNames(instance, "buyer_signups");
+  if (buyers.length > 0 && !buyers.includes("categories")) {
+    instance.exec("ALTER TABLE buyer_signups ADD COLUMN categories TEXT NOT NULL DEFAULT 'Real estate'");
+  }
 }
 
 export function getDb(): Database.Database {
@@ -85,6 +155,7 @@ export function getDb(): Database.Database {
     instance.pragma("journal_mode = DELETE");
   }
   instance.exec(SCHEMA);
+  migrate(instance);
   db = instance;
   return instance;
 }

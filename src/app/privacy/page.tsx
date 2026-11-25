@@ -24,8 +24,8 @@ export default function PrivacyPage() {
 
       <h2>Information you give us</h2>
       <ul>
-        <li>Seller requests: name, phone, email, property address, city, state, ZIP, property type, condition, timeline, and any optional price, reason, or notes.</li>
-        <li>Buyer signups: name, phone, email, optional company, markets, property types, price range, buy box notes, and whether proof of funds is available.</li>
+        <li>Seller requests: name, phone, email, city, state, ZIP, asset category, timeline, and the details for that category. Real estate includes an address, property type, and condition. Metals and jewelry can include item type, weight, karat or carat, certification, quantity, a description, and optional photos.</li>
+        <li>Buyer signups: name, phone, email, optional company, categories of interest, markets, property types when relevant, price range, buy box notes, and whether proof of funds is available.</li>
         <li>Contact messages: name, email, optional phone, and the message.</li>
         <li>Consent records: whether you checked the required consent box. Seller and buyer forms include consent to calls and texts, including autodialed or prerecorded messages. The contact form is only consent to a reply about that message.</li>
       </ul>
@@ -55,6 +55,11 @@ export default function PrivacyPage() {
       <h2>Calls and texts</h2>
       <p>
         If you check the seller or buyer consent box, you agree that we may call and text the number you provided, including with an automatic telephone dialing system or a prerecorded or artificial voice, about your inquiry and related property services. Message and data rates may apply. Message frequency varies. Reply STOP to opt out of texts and HELP for help. Consent is not a condition of any purchase, sale, or offer. You can also opt out by emailing {brand.email}.
+      </p>
+
+      <h2>Photos</h2>
+      <p>
+        Optional photos are stored on the same server as the lead database. They are available to the people who administer this site and are not published on the public pages. We do not ask you to upload a photo of a government ID.
       </p>
 
       <h2>How long we keep it</h2>

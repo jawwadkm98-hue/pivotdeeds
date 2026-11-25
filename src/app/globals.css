@@ -3,17 +3,17 @@
 @theme {
   --font-sans: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces Variable", Georgia, "Times New Roman", serif;
-  --color-ink: #14241c;
-  --color-pine: #1c3b2e;
-  --color-pine-deep: #10241c;
-  --color-moss: #3e5c4c;
-  --color-brass: #6f5018;
-  --color-brass-bright: #e4c27a;
-  --color-ember: #b8431a;
-  --color-ember-dark: #8e3012;
-  --color-cream: #f4efe6;
+  --color-ink: #0c1222;
+  --color-pine: #162033;
+  --color-pine-deep: #090e18;
+  --color-moss: #3c4a63;
+  --color-brass: #7a5b16;
+  --color-brass-bright: #e8c97a;
+  --color-ember: #c6a15a;
+  --color-ember-dark: #d7b56a;
+  --color-cream: #f4f1e8;
   --color-paper: #fffcf8;
-  --color-sand: #e4d9c8;
+  --color-sand: #e4dcc8;
   --color-danger: #8f1d2c;
 }
 
@@ -27,15 +27,15 @@
     background-color: var(--color-cream);
     background-image:
       radial-gradient(1100px 480px at 8% -10%, rgba(255, 252, 248, 0.95), transparent 55%),
-      radial-gradient(800px 420px at 100% 0%, rgba(228, 194, 122, 0.2), transparent 46%);
+      radial-gradient(800px 420px at 100% 0%, rgba(198, 161, 90, 0.22), transparent 46%);
     color: var(--color-ink);
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    background: #e4c27a;
-    color: #14241c;
+    background: #e8c97a;
+    color: #0c1222;
   }
 
   :focus-visible {
@@ -120,7 +120,7 @@ textarea.control {
 
 .btn-primary {
   background: var(--color-ember);
-  color: white;
+  color: var(--color-ink);
 }
 
 .btn-primary:hover {

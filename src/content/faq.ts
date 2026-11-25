@@ -56,6 +56,21 @@ export const faq = [
   },
   {
     question: "How is my information used?",
-    answer: `We use it to review your property or your buy box and to contact you. To evaluate or complete a sale you asked about, we may share relevant details with a title company or a cash buyer. We do not sell your information as a marketing list. See the Privacy Policy, or email ${brand.email} to ask a question about your information.`,
+    answer: `We use it to review your asset or your buy box and to contact you. To evaluate or complete a sale you asked about, we may share relevant details with a title company, a cash buyer, or a service needed to test or ship an item. We do not sell your information as a marketing list. See the Privacy Policy, or email ${brand.email} to ask a question about your information.`,
+  },
+  {
+    question: "Do you buy gold, diamonds, and jewelry?",
+    answer:
+      "Yes. We buy gold and other precious metals, diamonds, and jewelry anywhere in the country, along with real estate. Use the category selector on the sell form so we get the right details. Photos are optional. A description is required for anything that is not real estate.",
+  },
+  {
+    question: "Will I need identification to sell gold or jewelry?",
+    answer:
+      "Often, yes. State and local secondhand-dealer and precious-metals laws can require a valid government-issued photo ID and a record of the purchase. We follow the rules that apply to the transaction. We do not claim a dealer license on this website, and we do not collect an ID photo through the form.",
+  },
+  {
+    question: "How do you price metals and jewelry?",
+    answer:
+      "An offer starts from the item you describe: metal, weight, purity, stones, condition, and any lab report such as GIA. Bullion is generally tied to the spot market minus a spread. Jewelry and stones depend on quality and what a buyer will pay. The offer is optional.",
   },
 ] as const;

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   return new Response(files[type](), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="pivotdeeds-${type}-${stamp}.csv"`,
+      "Content-Disposition": `attachment; filename="crownwholesalers-${type}-${stamp}.csv"`,
       "Cache-Control": "no-store",
     },
   });

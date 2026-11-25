@@ -56,6 +56,46 @@ export type StateCode = (typeof STATES)[number][0];
 
 export const STATE_NAME = new Map<string, string>(STATES);
 
+/**
+ * Asset lines Crown Wholesalers buys. Add a category here, then teach
+ * `parseSeller` which fields that category requires.
+ */
+export const ASSET_CATEGORIES = [
+  { id: "real_estate", label: "Real estate" },
+  { id: "precious_metals", label: "Gold & precious metals" },
+  { id: "jewelry", label: "Diamonds & jewelry" },
+  { id: "other", label: "Other" },
+] as const;
+
+export type AssetCategoryId = (typeof ASSET_CATEGORIES)[number]["id"];
+
+export function categoryLabel(id: string): string {
+  return ASSET_CATEGORIES.find((item) => item.id === id)?.label ?? id;
+}
+
+export function isAssetCategory(value: string): value is AssetCategoryId {
+  return ASSET_CATEGORIES.some((item) => item.id === value);
+}
+
+export const METAL_ITEMS = [
+  "Gold coins",
+  "Gold bars or rounds",
+  "Scrap gold",
+  "Silver",
+  "Platinum",
+  "Other precious metal",
+] as const;
+
+export const JEWELRY_ITEMS = [
+  "Loose diamond",
+  "Diamond jewelry",
+  "Gold jewelry",
+  "Watch",
+  "Other gemstone or jewelry",
+] as const;
+
+export const CERTIFICATIONS = ["GIA", "AGS", "IGI", "EGL", "Other lab", "None", "Not sure"] as const;
+
 export const PROPERTY_TYPES = [
   "House",
   "Condo",
