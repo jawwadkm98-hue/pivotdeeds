@@ -19,7 +19,7 @@
       "binding": "DB",
       "database_name": "crownwholesalers",
       // Replace this placeholder with the id printed by `wrangler d1 create crownwholesalers`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "3578b4f9-c5f7-43cb-aa68-b184783f9040",
       "migrations_dir": "migrations"
     }
   ],

@@ -71,7 +71,12 @@ function d1Adapter(db: D1Database): Sql {
       return { lastInsertRowid: Number(result.meta?.last_row_id ?? 0) };
     },
     async exec(sql) {
-      await db.exec(sql);
+      const statements = sql
+        .split(";")
+        .map((s) => s.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+      if (statements.length === 0) return;
+      await db.exec(statements.map((s) => s + ";").join("\n"));
     },
   };
 }
