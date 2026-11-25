@@ -11,6 +11,7 @@ const paths = [
   "/we-buy",
   "/situations",
   "/buyers",
+  "/inventory",
   "/about",
   "/faq",
   "/contact",

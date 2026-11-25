@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
-import { brand, phoneIsLive } from "@brand";
+import { brand } from "@brand";
 import { ContactForm } from "@/components/ContactForm";
 import { JsonLd } from "@/components/JsonLd";
+import { getSiteContact, phoneTel } from "@/lib/settings";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: `Contact ${brand.name} at ${brand.email}. We buy property nationwide and reply to questions about cash offers and the buyers list.`,
-  alternates: { canonical: "/contact" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const contact = await getSiteContact();
+  return {
+    title: "Contact",
+    description: `Contact ${brand.name} at ${contact.email}. We buy property nationwide and reply to questions about cash offers and the buyers list.`,
+    alternates: { canonical: "/contact" },
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contact = await getSiteContact();
   const schema = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
@@ -17,7 +22,7 @@ export default function ContactPage() {
     mainEntity: {
       "@type": "Organization",
       name: brand.name,
-      email: brand.email,
+      email: contact.email,
       url: brand.siteUrl,
       areaServed: { "@type": "Country", "name": "United States" },
     },
@@ -36,16 +41,16 @@ export default function ContactPage() {
           <div>
             <dt className="text-sm font-semibold">Email</dt>
             <dd className="mt-1">
-              <a className="text-lg underline decoration-brass underline-offset-4" href={`mailto:${brand.email}`}>
-                {brand.email}
+              <a className="text-lg underline decoration-brass underline-offset-4" href={`mailto:${contact.email}`}>
+                {contact.email}
               </a>
             </dd>
           </div>
           <div>
             <dt className="text-sm font-semibold">Phone</dt>
             <dd className="mt-1 text-lg">
-              {phoneIsLive() ? <a href={`tel:+1${brand.phone.replace(/\D/g, "").replace(/^1/, "")}`}>{brand.phone}</a> : brand.phone}
-              {!phoneIsLive() ? <p className="mt-1 text-sm text-brass">Phone line coming soon. Please email us.</p> : null}
+              {contact.phoneIsLive ? <a href={phoneTel(contact.phone)}>{contact.phone}</a> : contact.phone}
+              {!contact.phoneIsLive ? <p className="mt-1 text-sm text-brass">Phone line coming soon. Please email us.</p> : null}
             </dd>
           </div>
           <div>

@@ -34,6 +34,8 @@ export type SellerLead = {
   tcpa_consent: number;
   ip: string | null;
   user_agent: string | null;
+  status: string;
+  notes: string | null;
 };
 
 export type BuyerSignup = {
@@ -52,6 +54,8 @@ export type BuyerSignup = {
   tcpa_consent: number;
   ip: string | null;
   user_agent: string | null;
+  status: string;
+  notes: string | null;
 };
 
 export type ContactMessage = {
@@ -64,6 +68,8 @@ export type ContactMessage = {
   consent: number;
   ip: string | null;
   user_agent: string | null;
+  status: string;
+  notes: string | null;
 };
 
 export type LeadPage<T> = {
@@ -100,6 +106,8 @@ const SELLER_HEADERS = [
   "tcpa_consent",
   "ip",
   "user_agent",
+  "status",
+  "notes",
 ] as const;
 
 const BUYER_HEADERS = [
@@ -118,9 +126,11 @@ const BUYER_HEADERS = [
   "tcpa_consent",
   "ip",
   "user_agent",
+  "status",
+  "notes",
 ] as const;
 
-const MESSAGE_HEADERS = ["id", "created_at", "name", "email", "phone", "message", "consent", "ip", "user_agent"] as const;
+const MESSAGE_HEADERS = ["id", "created_at", "name", "email", "phone", "message", "consent", "ip", "user_agent", "status", "notes"] as const;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -224,9 +234,9 @@ export async function readSellerPhoto(filename: string): Promise<{ body: Uint8Ar
   return { body: fs.readFileSync(full), contentType };
 }
 
-export async function insertBuyer(input: BuyerInput, meta: RequestMeta): Promise<void> {
+export async function insertBuyer(input: BuyerInput, meta: RequestMeta): Promise<number> {
   const sql = await getSql();
-  await sql.run(
+  const result = await sql.run(
     `INSERT INTO buyer_signups (
         created_at, name, phone, email, company, categories, markets, property_types,
         price_range, buy_box, proof_of_funds, tcpa_consent, ip, user_agent
@@ -247,16 +257,18 @@ export async function insertBuyer(input: BuyerInput, meta: RequestMeta): Promise
       meta.userAgent,
     ],
   );
+  return Number(result.lastInsertRowid);
 }
 
-export async function insertMessage(input: ContactInput, meta: RequestMeta): Promise<void> {
+export async function insertMessage(input: ContactInput, meta: RequestMeta): Promise<number> {
   const sql = await getSql();
-  await sql.run(
+  const result = await sql.run(
     `INSERT INTO contact_messages (
         created_at, name, email, phone, message, consent, ip, user_agent
       ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
     [nowIso(), input.name, input.email, input.phone, input.message, meta.ip, meta.userAgent],
   );
+  return Number(result.lastInsertRowid);
 }
 
 export async function leadCounts(): Promise<{ sellers: number; buyers: number; messages: number }> {
@@ -269,15 +281,16 @@ export async function leadCounts(): Promise<{ sellers: number; buyers: number; m
   };
 }
 
-async function paginate<T>(table: "seller_leads" | "buyer_signups" | "contact_messages", whereSql: string, query: string, page: number, pageSize: number): Promise<LeadPage<T>> {
+async function paginate<T>(table: "seller_leads" | "buyer_signups" | "contact_messages", whereSql: string, query: string, page: number, pageSize: number, status = ""): Promise<LeadPage<T>> {
   const sql = await getSql();
   const q = likeQuery(query);
-  const filters = whereSql.match(/\?/g)?.map(() => q) ?? [];
-  const total = (await sql.get<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} ${whereSql}`, filters))?.n ?? 0;
+  const filters = [...(whereSql.match(/\?/g)?.map(() => q) ?? []), status, status];
+  const clause = `${whereSql} AND (? = '' OR status = ?)`;
+  const total = (await sql.get<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} ${clause}`, filters))?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(Math.max(page, 1), total === 0 ? 1 : pages);
   const offset = (safePage - 1) * pageSize;
-  const rows = await sql.all<T>(`SELECT * FROM ${table} ${whereSql} ORDER BY id DESC LIMIT ? OFFSET ?`, [...filters, pageSize, offset]);
+  const rows = await sql.all<T>(`SELECT * FROM ${table} ${clause} ORDER BY id DESC LIMIT ? OFFSET ?`, [...filters, pageSize, offset]);
   return { rows, total, page: safePage, pages: total === 0 ? 1 : pages };
 }
 
@@ -294,8 +307,8 @@ const sellerSearch = `WHERE (
   OR item_type LIKE '%' || ? || '%'
 )`;
 
-export function searchSellers(query: string, page: number, pageSize = 25): Promise<LeadPage<SellerLead>> {
-  return paginate<SellerLead>("seller_leads", sellerSearch, query, page, pageSize);
+export function searchSellers(query: string, page: number, pageSize = 25, status = ""): Promise<LeadPage<SellerLead>> {
+  return paginate<SellerLead>("seller_leads", sellerSearch, query, page, pageSize, status);
 }
 
 const buyerSearch = `WHERE (
@@ -309,8 +322,8 @@ const buyerSearch = `WHERE (
   OR categories LIKE '%' || ? || '%'
 )`;
 
-export function searchBuyers(query: string, page: number, pageSize = 25): Promise<LeadPage<BuyerSignup>> {
-  return paginate<BuyerSignup>("buyer_signups", buyerSearch, query, page, pageSize);
+export function searchBuyers(query: string, page: number, pageSize = 25, status = ""): Promise<LeadPage<BuyerSignup>> {
+  return paginate<BuyerSignup>("buyer_signups", buyerSearch, query, page, pageSize, status);
 }
 
 const messageSearch = `WHERE (
@@ -321,8 +334,8 @@ const messageSearch = `WHERE (
   OR message LIKE '%' || ? || '%'
 )`;
 
-export function searchMessages(query: string, page: number, pageSize = 25): Promise<LeadPage<ContactMessage>> {
-  return paginate<ContactMessage>("contact_messages", messageSearch, query, page, pageSize);
+export function searchMessages(query: string, page: number, pageSize = 25, status = ""): Promise<LeadPage<ContactMessage>> {
+  return paginate<ContactMessage>("contact_messages", messageSearch, query, page, pageSize, status);
 }
 
 export async function sellersCsv(): Promise<string> {
@@ -350,4 +363,62 @@ export async function messagesCsv(): Promise<string> {
     MESSAGE_HEADERS,
     rows.map((row) => MESSAGE_HEADERS.map((key) => row[key])),
   );
+}
+
+const LEAD_TABLES = {
+  sellers: "seller_leads",
+  buyers: "buyer_signups",
+  messages: "contact_messages",
+} as const;
+
+export type LeadKind = keyof typeof LEAD_TABLES;
+
+export function leadTable(kind: LeadKind): (typeof LEAD_TABLES)[LeadKind] {
+  return LEAD_TABLES[kind];
+}
+
+export async function getSeller(id: number): Promise<SellerLead | undefined> {
+  return (await getSql()).get<SellerLead>("SELECT * FROM seller_leads WHERE id = ?", [id]);
+}
+
+export async function getBuyer(id: number): Promise<BuyerSignup | undefined> {
+  return (await getSql()).get<BuyerSignup>("SELECT * FROM buyer_signups WHERE id = ?", [id]);
+}
+
+export async function getMessage(id: number): Promise<ContactMessage | undefined> {
+  return (await getSql()).get<ContactMessage>("SELECT * FROM contact_messages WHERE id = ?", [id]);
+}
+
+export async function countLeadStatus(kind: LeadKind, status: string): Promise<number> {
+  const row = await (await getSql()).get<{ n: number }>(`SELECT COUNT(*) AS n FROM ${leadTable(kind)} WHERE status = ?`, [status]);
+  return Number(row?.n ?? 0);
+}
+
+export async function updateLead(kind: LeadKind, id: number, status: string, notes: string): Promise<void> {
+  await (await getSql()).run(`UPDATE ${leadTable(kind)} SET status = ?, notes = ? WHERE id = ?`, [status, notes, id]);
+}
+
+export async function deleteLead(kind: LeadKind, id: number): Promise<void> {
+  await (await getSql()).run(`DELETE FROM ${leadTable(kind)} WHERE id = ?`, [id]);
+}
+
+export async function recentLeads(kind: LeadKind): Promise<{ id: number; created_at: string; name: string }[]> {
+  return (await getSql()).all(`SELECT id, created_at, name FROM ${leadTable(kind)} ORDER BY id DESC LIMIT 5`);
+}
+
+export async function leadRows(kind: LeadKind, query: string, page: number, status: string) {
+  const result = kind === "sellers" ? await searchSellers(query, page, 25, status) : kind === "buyers" ? await searchBuyers(query, page, 25, status) : await searchMessages(query, page, 25, status);
+  return {
+    total: result.total,
+    page: result.page,
+    pages: result.pages,
+    rows: result.rows.map((row) => ({
+      id: row.id,
+      created_at: row.created_at,
+      name: row.name,
+      email: row.email,
+      status: row.status,
+      detail: "city" in row ? `${row.city}, ${row.state}` : "message" in row ? row.message.slice(0, 80) : row.markets,
+    })),
+  };
 }

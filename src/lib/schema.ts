@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS seller_leads (
   photo_names TEXT,
   tcpa_consent INTEGER NOT NULL,
   ip TEXT,
-  user_agent TEXT
+  user_agent TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS buyer_signups (
@@ -44,7 +46,9 @@ CREATE TABLE IF NOT EXISTS buyer_signups (
   proof_of_funds TEXT NOT NULL,
   tcpa_consent INTEGER NOT NULL,
   ip TEXT,
-  user_agent TEXT
+  user_agent TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS contact_messages (
@@ -56,7 +60,9 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   message TEXT NOT NULL,
   consent INTEGER NOT NULL,
   ip TEXT,
-  user_agent TEXT
+  user_agent TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS rate_events (
@@ -70,4 +76,68 @@ CREATE INDEX IF NOT EXISTS idx_rate_events_lookup ON rate_events (bucket, ip, cr
 CREATE INDEX IF NOT EXISTS idx_seller_created ON seller_leads (created_at);
 CREATE INDEX IF NOT EXISTS idx_buyer_created ON buyer_signups (created_at);
 CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages (created_at);
+
+CREATE TABLE IF NOT EXISTS inventory (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  title TEXT NOT NULL,
+  property_type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'available',
+  published INTEGER NOT NULL DEFAULT 0,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  address TEXT,
+  show_address INTEGER NOT NULL DEFAULT 0,
+  asking_price INTEGER,
+  arv INTEGER,
+  estimated_repairs INTEGER,
+  beds REAL,
+  baths REAL,
+  sqft INTEGER,
+  description TEXT,
+  photo_names TEXT
+);
+
+CREATE TABLE IF NOT EXISTS inventory_inquiries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  inventory_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  notes TEXT,
+  tcpa_consent INTEGER NOT NULL,
+  ip TEXT,
+  user_agent TEXT
+);
+
+CREATE TABLE IF NOT EXISTS library_files (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  name TEXT NOT NULL,
+  r2_key TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  size_bytes INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_public ON inventory (published, state, property_type);
+CREATE INDEX IF NOT EXISTS idx_inquiries_inventory ON inventory_inquiries (inventory_id, created_at);
 `;
+
+/** Applied after SCHEMA_SQL so databases created before these columns still gain them. */
+export const COLUMN_PATCHES = [
+  "ALTER TABLE seller_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
+  "ALTER TABLE seller_leads ADD COLUMN notes TEXT",
+  "ALTER TABLE buyer_signups ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
+  "ALTER TABLE buyer_signups ADD COLUMN notes TEXT",
+  "ALTER TABLE contact_messages ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
+  "ALTER TABLE contact_messages ADD COLUMN notes TEXT",
+];

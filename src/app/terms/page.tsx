@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { brand } from "@brand";
 import { legalUpdated } from "@/content/legal";
+import { getSiteContact } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const contact = await getSiteContact();
   return (
     <article className="prose-legal mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
       <p className="kicker">Terms</p>
@@ -17,7 +19,7 @@ export default function TermsPage() {
 
       <h2>Who we are</h2>
       <p>
-        {brand.name} is a cash buyer of real estate, precious metals, jewelry, and other high-value assets. We are not a licensed real estate broker or agent, and we do not represent sellers or buyers as their agent. We do not claim any professional, pawn, or dealer license on this website. Contact: <a href={`mailto:${brand.email}`}>{brand.email}</a>. Service area: {brand.serviceArea}.
+        {brand.name} is a cash buyer of real estate, precious metals, jewelry, and other high-value assets. We are not a licensed real estate broker or agent, and we do not represent sellers or buyers as their agent. We do not claim any professional, pawn, or dealer license on this website. Contact: <a href={`mailto:${contact.email}`}>{contact.email}</a>. Service area: {brand.serviceArea}.
       </p>
 
       <h2>No obligation</h2>
@@ -90,7 +92,7 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms: <a href={`mailto:${brand.email}`}>{brand.email}</a>.
+        Questions about these terms: <a href={`mailto:${contact.email}`}>{contact.email}</a>.
       </p>
     </article>
   );

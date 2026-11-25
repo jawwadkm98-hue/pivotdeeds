@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS inventory (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, title TEXT NOT NULL, property_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'available', published INTEGER NOT NULL DEFAULT 0, city TEXT NOT NULL, state TEXT NOT NULL, address TEXT, show_address INTEGER NOT NULL DEFAULT 0, asking_price INTEGER, arv INTEGER, estimated_repairs INTEGER, beds REAL, baths REAL, sqft INTEGER, description TEXT, photo_names TEXT);
+CREATE TABLE IF NOT EXISTS inventory_inquiries (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, inventory_id INTEGER NOT NULL, name TEXT NOT NULL, phone TEXT NOT NULL, email TEXT NOT NULL, message TEXT, status TEXT NOT NULL DEFAULT 'new', notes TEXT, tcpa_consent INTEGER NOT NULL, ip TEXT, user_agent TEXT);
+CREATE TABLE IF NOT EXISTS library_files (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, name TEXT NOT NULL, r2_key TEXT NOT NULL, content_type TEXT NOT NULL, size_bytes INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+ALTER TABLE seller_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'new';
+ALTER TABLE seller_leads ADD COLUMN notes TEXT;
+ALTER TABLE buyer_signups ADD COLUMN status TEXT NOT NULL DEFAULT 'new';
+ALTER TABLE buyer_signups ADD COLUMN notes TEXT;
+ALTER TABLE contact_messages ADD COLUMN status TEXT NOT NULL DEFAULT 'new';
+ALTER TABLE contact_messages ADD COLUMN notes TEXT;
+CREATE INDEX IF NOT EXISTS idx_inventory_public ON inventory (published, state, property_type);
+CREATE INDEX IF NOT EXISTS idx_inquiries_inventory ON inventory_inquiries (inventory_id, created_at);

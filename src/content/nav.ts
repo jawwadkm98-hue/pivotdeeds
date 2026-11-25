@@ -1,6 +1,7 @@
 export const primaryNav = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/we-buy", label: "We buy" },
+  { href: "/inventory", label: "Inventory" },
   { href: "/sell", label: "Sell" },
   { href: "/situations", label: "Situations" },
   { href: "/buyers", label: "Buyers" },
@@ -25,5 +26,6 @@ export const companyLinks = [
 
 export function navIsActive(pathname: string, href: string): boolean {
   if (href === "/sell") return pathname === "/sell" || pathname.startsWith("/sell/");
+  if (href === "/inventory") return pathname === "/inventory" || pathname.startsWith("/inventory/");
   return pathname === href;
 }

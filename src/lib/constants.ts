@@ -150,3 +150,9 @@ export const PRICE_RANGES = [
 export function includesOption(options: readonly string[], value: string): boolean {
   return options.includes(value);
 }
+
+export const LISTING_TYPES = ["House", "Multifamily", "Land", "Commercial", "Condo", "Townhome", "Mobile home", "Other"] as const;
+
+export const LISTING_STATUSES = ["available", "under contract", "sold"] as const;
+
+export const PIPELINE = ["new", "contacted", "under contract", "closed", "dead"] as const;

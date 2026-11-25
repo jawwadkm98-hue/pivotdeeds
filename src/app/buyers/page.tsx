@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { brand } from "@brand";
 import { BuyerForm } from "@/components/BuyerForm";
 
@@ -27,6 +28,12 @@ export default function BuyersPage() {
           <li>We may ask for proof of funds before we share an address.</li>
           <li>A deal may be an assignment. Where required, we disclose that we hold an equitable interest and may not be able to convey title before you commit.</li>
           <li>Joining is free and is not a promise that a property will be offered to you.</li>
+          <li>
+            <Link href="/inventory" className="underline decoration-brass underline-offset-4">
+              See deals already posted
+            </Link>
+            .
+          </li>
         </ul>
       </div>
       <div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { brand } from "@brand";
 import { JsonLd } from "@/components/JsonLd";
 import { faq } from "@/content/faq";
+import { getSiteContact } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -10,11 +11,13 @@ export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
 };
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const contact = await getSiteContact();
+  const items = faq.map((item) => ({ ...item, answer: item.answer.replaceAll(brand.email, contact.email) }));
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faq.map((item) => ({
+    mainEntity: items.map((item) => ({
       "@type": "Question",
       name: item.question,
       acceptedAnswer: { "@type": "Answer", text: item.answer },
@@ -27,7 +30,7 @@ export default function FaqPage() {
       <p className="kicker">FAQ</p>
       <h1 className="mt-3 font-serif text-4xl font-medium tracking-[-0.03em] sm:text-5xl">Straight answers.</h1>
       <div className="mt-8 divide-y divide-sand border-y border-sand">
-        {faq.map((item) => (
+        {items.map((item) => (
           <details key={item.question} className="group py-4" open={false}>
             <summary className="menu-summary flex cursor-pointer items-center justify-between gap-4 font-semibold">
               {item.question}

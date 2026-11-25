@@ -6,7 +6,11 @@ import { brand, socialProfiles } from "@brand";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
+import { SiteFrame } from "@/components/SiteFrame";
+import { getSiteContact } from "@/lib/settings";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const description = `${brand.name} is a nationwide cash buyer of real estate, gold, diamonds, jewelry, and other high-value assets. Request a no-obligation offer or join the buyers list.`;
 
@@ -43,14 +47,15 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const contact = await getSiteContact();
   const sameAs = socialProfiles().map((item) => item.href);
   const organization = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: brand.name,
     url: brand.siteUrl,
-    email: brand.email,
+    email: contact.email,
     logo: `${brand.siteUrl}/mark.svg`,
     description,
     areaServed: { "@type": "Country", "name": "United States" },
@@ -61,17 +66,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="min-h-screen antialiased">
         <JsonLd data={organization} />
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-paper focus:px-4 focus:py-2"
-        >
-          Skip to content
-        </a>
-        <Header />
-        <main id="main" tabIndex={-1}>
+        <SiteFrame header={<Header />} footer={<Footer />}>
           {children}
-        </main>
-        <Footer />
+        </SiteFrame>
       </body>
     </html>
   );

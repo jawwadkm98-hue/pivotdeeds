@@ -28,5 +28,12 @@
       "binding": "PHOTOS",
       "bucket_name": "crownwholesalers-photos"
     }
+  ],
+  "send_email": [
+    {
+      "name": "NOTIFY_EMAIL",
+      "destination_address": "crownwholesalersusa@gmail.com",
+      "allowed_sender_addresses": ["leads@crownwholesalers.com"]
+    }
   ]
 }
