@@ -1,0 +1,7 @@
+www.crownwholesalers.com {
+	redir https://crownwholesalers.com{uri} permanent
+}
+
+crownwholesalers.com {
+	reverse_proxy 127.0.0.1:3000
+}
