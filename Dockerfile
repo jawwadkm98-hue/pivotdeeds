@@ -18,10 +18,8 @@ ENV DATABASE_PATH=/data/crownwholesalers.sqlite
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 RUN mkdir -p /data && chown node:node /data
-COPY --from=build --chown=node:node /app/public ./public
-COPY --from=build --chown=node:node /app/.next/standalone ./
-COPY --from=build --chown=node:node /app/.next/static ./.next/static
+COPY --from=build --chown=node:node /app ./
 USER node
 EXPOSE 3000
 VOLUME ["/data"]
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

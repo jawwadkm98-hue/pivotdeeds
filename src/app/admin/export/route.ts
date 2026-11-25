@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 
   const stamp = new Date().toISOString().slice(0, 10);
-  return new Response(files[type](), {
+  return new Response(await files[type](), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="crownwholesalers-${type}-${stamp}.csv"`,

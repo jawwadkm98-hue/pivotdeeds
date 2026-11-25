@@ -1,21 +1,25 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { readRuntimeEnv } from "./db";
 
 export const SESSION_COOKIE = "pd_admin";
 const MAX_AGE_SECONDS = 60 * 60 * 12;
 
-export function adminConfigured(): boolean {
-  return (process.env.ADMIN_PASSWORD ?? "").length >= 10 && (process.env.ADMIN_SESSION_SECRET ?? "").length >= 24;
+export async function adminPassword(): Promise<string> {
+  return readRuntimeEnv("ADMIN_PASSWORD");
 }
 
-function sessionSecret(): string {
-  const value = process.env.ADMIN_SESSION_SECRET ?? "";
-  if (value.length < 24) throw new Error("ADMIN_SESSION_SECRET is not configured");
-  return value;
+export async function sessionSecret(): Promise<string> {
+  return (await readRuntimeEnv("SESSION_SECRET")) || (await readRuntimeEnv("ADMIN_SESSION_SECRET"));
 }
 
-export function passwordMatches(input: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD ?? "";
+export async function adminConfigured(): Promise<boolean> {
+  const password = await adminPassword();
+  const secret = await sessionSecret();
+  return password.length >= 10 && secret.length >= 24;
+}
+
+export function passwordMatches(input: string, expected: string): boolean {
   if (expected.length < 10 || input.length === 0 || input.length > 200) return false;
   const actualHash = createHash("sha256").update(input).digest();
   const expectedHash = createHash("sha256").update(expected).digest();
@@ -38,24 +42,24 @@ export function sessionCookieOptions() {
   };
 }
 
-export function createSessionToken(): string {
+export async function createSessionToken(): Promise<string> {
   const payload = Buffer.from(
     JSON.stringify({
       exp: Date.now() + MAX_AGE_SECONDS * 1000,
       n: randomBytes(16).toString("hex"),
     }),
   ).toString("base64url");
-  const signature = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  const signature = createHmac("sha256", await sessionSecret()).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
 
-export function verifySessionToken(token: string | undefined | null): boolean {
-  if (!token || !adminConfigured()) return false;
+export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
+  if (!token || !(await adminConfigured())) return false;
   const parts = token.split(".");
   if (parts.length !== 2) return false;
   const [payload, signature] = parts;
   if (!payload || !signature) return false;
-  const expected = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  const expected = createHmac("sha256", await sessionSecret()).update(payload).digest("base64url");
   const left = Buffer.from(signature);
   const right = Buffer.from(expected);
   if (left.length !== right.length || !timingSafeEqual(left, right)) return false;
@@ -69,5 +73,5 @@ export function verifySessionToken(token: string | undefined | null): boolean {
 
 export async function isAuthed(): Promise<boolean> {
   const jar = await cookies();
-  return verifySessionToken(jar.get(SESSION_COOKIE)?.value);
+  return await verifySessionToken(jar.get(SESSION_COOKIE)?.value);
 }

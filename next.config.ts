@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -10,7 +11,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  output: "standalone",
   serverExternalPackages: ["better-sqlite3"],
   async headers() {
     return [
@@ -37,3 +37,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+initOpenNextCloudflareForDev();

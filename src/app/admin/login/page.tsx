@@ -12,7 +12,7 @@ export default async function AdminLoginPage() {
   if (await isAuthed()) redirect("/admin");
   return (
     <div className="mx-auto w-full max-w-lg px-5 py-16 sm:px-8">
-      <LoginForm configured={adminConfigured()} />
+      <LoginForm configured={await adminConfigured()} />
     </div>
   );
 }

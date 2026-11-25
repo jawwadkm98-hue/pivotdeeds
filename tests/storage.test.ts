@@ -8,7 +8,7 @@ import { parseSeller } from "../src/lib/validate.ts";
 test("sqlite stores a seller lead, searches it, exports csv, and rate limits", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "crownwholesalers-"));
   process.env.DATABASE_PATH = path.join(dir, "test.sqlite");
-  const { closeDb, getDb } = await import("../src/lib/db.ts");
+  const { closeDb, getSql } = await import("../src/lib/db.ts");
   const { consumeRate } = await import("../src/lib/rate-limit.ts");
   const { insertSeller, searchSellers, sellersCsv } = await import("../src/lib/leads.ts");
 
@@ -34,28 +34,26 @@ test("sqlite stores a seller lead, searches it, exports csv, and rate limits", a
     );
     assert.equal(parsed.ok, true);
     if (!parsed.ok) return;
-    insertSeller(parsed.data, { ip: "203.0.113.10", userAgent: "test" });
+    await insertSeller(parsed.data, { ip: "203.0.113.10", userAgent: "test" });
 
-    const found = searchSellers("baltimore", 1);
+    const found = await searchSellers("baltimore", 1);
     assert.equal(found.total, 1);
     assert.equal(found.rows[0]?.email, "ada@example.com");
     assert.equal(found.rows[0]?.tcpa_consent, 1);
-    assert.equal(searchSellers("nobody-home", 1).total, 0);
+    assert.equal((await searchSellers("nobody-home", 1)).total, 0);
 
-    const csv = sellersCsv();
+    const csv = await sellersCsv();
     assert.match(csv, /Ada Lovelace/);
     assert.match(csv, /'=1\+1 keep/);
 
     const ip = "198.51.100.20";
     for (let attempt = 0; attempt < 6; attempt += 1) {
-      assert.equal(consumeRate(ip, "lead", 6, 60_000), true);
+      assert.equal(await consumeRate(ip, "lead", 6, 60_000), true);
     }
-    assert.equal(consumeRate(ip, "lead", 6, 60_000), false);
-    assert.equal(consumeRate("198.51.100.21", "lead", 6, 60_000), true);
-    getDb()
-      .prepare("UPDATE rate_events SET created_at = ?")
-      .run(Date.now() - 120_000);
-    assert.equal(consumeRate(ip, "lead", 6, 60_000), true);
+    assert.equal(await consumeRate(ip, "lead", 6, 60_000), false);
+    assert.equal(await consumeRate("198.51.100.21", "lead", 6, 60_000), true);
+    await (await getSql()).run("UPDATE rate_events SET created_at = ?", [Date.now() - 120_000]);
+    assert.equal(await consumeRate(ip, "lead", 6, 60_000), true);
   } finally {
     closeDb();
     fs.rmSync(dir, { recursive: true, force: true });

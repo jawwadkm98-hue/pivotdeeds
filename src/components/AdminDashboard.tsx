@@ -29,11 +29,11 @@ function rangeLabel(page: number, count: number, total: number): string {
   return `Showing ${start}–${end} of ${total}`;
 }
 
-export function AdminDashboard({ tab, query, page }: { tab: Tab; query: string; page: number }) {
-  const counts = leadCounts();
-  const sellers = tab === "sellers" ? searchSellers(query, page) : null;
-  const buyers = tab === "buyers" ? searchBuyers(query, page) : null;
-  const messages = tab === "messages" ? searchMessages(query, page) : null;
+export async function AdminDashboard({ tab, query, page }: { tab: Tab; query: string; page: number }) {
+  const counts = await leadCounts();
+  const sellers = tab === "sellers" ? await searchSellers(query, page) : null;
+  const buyers = tab === "buyers" ? await searchBuyers(query, page) : null;
+  const messages = tab === "messages" ? await searchMessages(query, page) : null;
   const current = sellers ?? buyers ?? messages;
   const exportType = tab === "buyers" ? "buyers" : tab === "messages" ? "messages" : "sellers";
 

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { toCsv } from "./csv";
-import { databasePath, getDb } from "./db";
+import { getPhotoBucket, getSql, isCloudflareWorker } from "./db";
 import { likeQuery } from "./format";
 import type { BuyerInput, ContactInput, SellerInput } from "./validate";
 
@@ -126,21 +126,23 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function uploadDirectory(): string {
-  return path.join(path.dirname(databasePath()), "uploads");
+function localUploadDirectory(): string {
+  const root = process.env.DATABASE_PATH
+    ? path.dirname(process.env.DATABASE_PATH)
+    : path.join(process.cwd(), "data");
+  return path.join(root, "uploads");
 }
 
-export function insertSeller(input: SellerInput, meta: RequestMeta): number {
-  const result = getDb()
-    .prepare(
-      `INSERT INTO seller_leads (
+export async function insertSeller(input: SellerInput, meta: RequestMeta): Promise<number> {
+  const sql = await getSql();
+  const result = await sql.run(
+    `INSERT INTO seller_leads (
         created_at, asset_category, name, phone, email, city, state, zip,
         timeline, asking_price, description, address, property_type, condition, reason,
         item_type, weight, purity, certification, quantity, photo_count,
         tcpa_consent, ip, user_agent
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
-    )
-    .run(
+    [
       nowIso(),
       input.assetCategory,
       input.name,
@@ -163,48 +165,73 @@ export function insertSeller(input: SellerInput, meta: RequestMeta): number {
       input.quantity,
       meta.ip,
       meta.userAgent,
-    );
+    ],
+  );
   return Number(result.lastInsertRowid);
 }
 
-export function deleteSeller(id: number): void {
-  getDb().prepare("DELETE FROM seller_leads WHERE id = ?").run(id);
+export async function deleteSeller(id: number): Promise<void> {
+  const sql = await getSql();
+  await sql.run("DELETE FROM seller_leads WHERE id = ?", [id]);
 }
 
-export function saveSellerPhotos(leadId: number, files: { ext: string; bytes: Buffer }[]): string[] {
-  const directory = uploadDirectory();
-  fs.mkdirSync(directory, { recursive: true });
-  const names = files.map((file, index) => {
-    const filename = `${leadId}-${index + 1}.${file.ext}`;
-    fs.writeFileSync(path.join(directory, filename), file.bytes);
-    return filename;
-  });
-  if (names.length > 0) {
-    getDb()
-      .prepare("UPDATE seller_leads SET photo_count = ?, photo_names = ? WHERE id = ?")
-      .run(names.length, names.join("; "), leadId);
+const PHOTO_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+export async function saveSellerPhotos(leadId: number, files: { ext: string; bytes: Buffer }[]): Promise<string[]> {
+  if (files.length === 0) return [];
+  const names = files.map((file, index) => `${leadId}-${index + 1}.${file.ext}`);
+  const bucket = await getPhotoBucket();
+  const sql = await getSql();
+
+  if (bucket) {
+    await Promise.all(
+      files.map((file, index) =>
+        bucket.put(names[index], file.bytes, { httpMetadata: { contentType: PHOTO_TYPES[file.ext] ?? "application/octet-stream" } }),
+      ),
+    );
+  } else if (!isCloudflareWorker()) {
+    const directory = localUploadDirectory();
+    fs.mkdirSync(directory, { recursive: true });
+    files.forEach((file, index) => {
+      fs.writeFileSync(path.join(directory, names[index]), file.bytes);
+    });
+  } else {
+    return [];
   }
+
+  await sql.run("UPDATE seller_leads SET photo_count = ?, photo_names = ? WHERE id = ?", [names.length, names.join("; "), leadId]);
   return names;
 }
 
-export function resolveUpload(filename: string): string | null {
+export async function readSellerPhoto(filename: string): Promise<{ body: Uint8Array | ReadableStream; contentType: string } | null> {
   if (!/^\d+-\d+\.(jpg|png|webp)$/.test(filename)) return null;
-  const directory = path.resolve(uploadDirectory());
+  const ext = filename.slice(filename.lastIndexOf(".") + 1);
+  const contentType = PHOTO_TYPES[ext] ?? "application/octet-stream";
+  const bucket = await getPhotoBucket();
+  if (bucket) {
+    const object = await bucket.get(filename);
+    if (!object) return null;
+    return { body: object.body, contentType: object.httpMetadata?.contentType || contentType };
+  }
+  if (isCloudflareWorker()) return null;
+  const directory = path.resolve(localUploadDirectory());
   const full = path.resolve(directory, filename);
-  if (!full.startsWith(directory + path.sep)) return null;
-  if (!fs.existsSync(full)) return null;
-  return full;
+  if (!full.startsWith(directory + path.sep) || !fs.existsSync(full)) return null;
+  return { body: fs.readFileSync(full), contentType };
 }
 
-export function insertBuyer(input: BuyerInput, meta: RequestMeta): void {
-  getDb()
-    .prepare(
-      `INSERT INTO buyer_signups (
+export async function insertBuyer(input: BuyerInput, meta: RequestMeta): Promise<void> {
+  const sql = await getSql();
+  await sql.run(
+    `INSERT INTO buyer_signups (
         created_at, name, phone, email, company, categories, markets, property_types,
         price_range, buy_box, proof_of_funds, tcpa_consent, ip, user_agent
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-    )
-    .run(
+    [
       nowIso(),
       input.name,
       input.phone,
@@ -218,42 +245,39 @@ export function insertBuyer(input: BuyerInput, meta: RequestMeta): void {
       input.proofOfFunds,
       meta.ip,
       meta.userAgent,
-    );
+    ],
+  );
 }
 
-export function insertMessage(input: ContactInput, meta: RequestMeta): void {
-  getDb()
-    .prepare(
-      `INSERT INTO contact_messages (
+export async function insertMessage(input: ContactInput, meta: RequestMeta): Promise<void> {
+  const sql = await getSql();
+  await sql.run(
+    `INSERT INTO contact_messages (
         created_at, name, email, phone, message, consent, ip, user_agent
       ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
-    )
-    .run(nowIso(), input.name, input.email, input.phone, input.message, meta.ip, meta.userAgent);
+    [nowIso(), input.name, input.email, input.phone, input.message, meta.ip, meta.userAgent],
+  );
 }
 
-export function leadCounts(): { sellers: number; buyers: number; messages: number } {
-  const db = getDb();
-  const count = (sql: string) => db.prepare<unknown[], { n: number }>(sql).get()?.n ?? 0;
+export async function leadCounts(): Promise<{ sellers: number; buyers: number; messages: number }> {
+  const sql = await getSql();
+  const count = async (statement: string) => (await sql.get<{ n: number }>(statement))?.n ?? 0;
   return {
-    sellers: count("SELECT COUNT(*) AS n FROM seller_leads"),
-    buyers: count("SELECT COUNT(*) AS n FROM buyer_signups"),
-    messages: count("SELECT COUNT(*) AS n FROM contact_messages"),
+    sellers: await count("SELECT COUNT(*) AS n FROM seller_leads"),
+    buyers: await count("SELECT COUNT(*) AS n FROM buyer_signups"),
+    messages: await count("SELECT COUNT(*) AS n FROM contact_messages"),
   };
 }
 
-function paginate<T>(table: "seller_leads" | "buyer_signups" | "contact_messages", whereSql: string, query: string, page: number, pageSize: number): LeadPage<T> {
+async function paginate<T>(table: "seller_leads" | "buyer_signups" | "contact_messages", whereSql: string, query: string, page: number, pageSize: number): Promise<LeadPage<T>> {
+  const sql = await getSql();
   const q = likeQuery(query);
   const filters = whereSql.match(/\?/g)?.map(() => q) ?? [];
-  const total =
-    getDb()
-      .prepare<unknown[], { n: number }>(`SELECT COUNT(*) AS n FROM ${table} ${whereSql}`)
-      .get(...filters)?.n ?? 0;
+  const total = (await sql.get<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table} ${whereSql}`, filters))?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(Math.max(page, 1), total === 0 ? 1 : pages);
   const offset = (safePage - 1) * pageSize;
-  const rows = getDb()
-    .prepare<unknown[], T>(`SELECT * FROM ${table} ${whereSql} ORDER BY id DESC LIMIT ? OFFSET ?`)
-    .all(...filters, pageSize, offset);
+  const rows = await sql.all<T>(`SELECT * FROM ${table} ${whereSql} ORDER BY id DESC LIMIT ? OFFSET ?`, [...filters, pageSize, offset]);
   return { rows, total, page: safePage, pages: total === 0 ? 1 : pages };
 }
 
@@ -270,7 +294,7 @@ const sellerSearch = `WHERE (
   OR item_type LIKE '%' || ? || '%'
 )`;
 
-export function searchSellers(query: string, page: number, pageSize = 25): LeadPage<SellerLead> {
+export function searchSellers(query: string, page: number, pageSize = 25): Promise<LeadPage<SellerLead>> {
   return paginate<SellerLead>("seller_leads", sellerSearch, query, page, pageSize);
 }
 
@@ -285,7 +309,7 @@ const buyerSearch = `WHERE (
   OR categories LIKE '%' || ? || '%'
 )`;
 
-export function searchBuyers(query: string, page: number, pageSize = 25): LeadPage<BuyerSignup> {
+export function searchBuyers(query: string, page: number, pageSize = 25): Promise<LeadPage<BuyerSignup>> {
   return paginate<BuyerSignup>("buyer_signups", buyerSearch, query, page, pageSize);
 }
 
@@ -297,28 +321,31 @@ const messageSearch = `WHERE (
   OR message LIKE '%' || ? || '%'
 )`;
 
-export function searchMessages(query: string, page: number, pageSize = 25): LeadPage<ContactMessage> {
+export function searchMessages(query: string, page: number, pageSize = 25): Promise<LeadPage<ContactMessage>> {
   return paginate<ContactMessage>("contact_messages", messageSearch, query, page, pageSize);
 }
 
-export function sellersCsv(): string {
-  const rows = getDb().prepare<unknown[], SellerLead>("SELECT * FROM seller_leads ORDER BY id DESC").all();
+export async function sellersCsv(): Promise<string> {
+  const sql = await getSql();
+  const rows = await sql.all<SellerLead>("SELECT * FROM seller_leads ORDER BY id DESC");
   return toCsv(
     SELLER_HEADERS,
     rows.map((row) => SELLER_HEADERS.map((key) => row[key])),
   );
 }
 
-export function buyersCsv(): string {
-  const rows = getDb().prepare<unknown[], BuyerSignup>("SELECT * FROM buyer_signups ORDER BY id DESC").all();
+export async function buyersCsv(): Promise<string> {
+  const sql = await getSql();
+  const rows = await sql.all<BuyerSignup>("SELECT * FROM buyer_signups ORDER BY id DESC");
   return toCsv(
     BUYER_HEADERS,
     rows.map((row) => BUYER_HEADERS.map((key) => row[key])),
   );
 }
 
-export function messagesCsv(): string {
-  const rows = getDb().prepare<unknown[], ContactMessage>("SELECT * FROM contact_messages ORDER BY id DESC").all();
+export async function messagesCsv(): Promise<string> {
+  const sql = await getSql();
+  const rows = await sql.all<ContactMessage>("SELECT * FROM contact_messages ORDER BY id DESC");
   return toCsv(
     MESSAGE_HEADERS,
     rows.map((row) => MESSAGE_HEADERS.map((key) => row[key])),
