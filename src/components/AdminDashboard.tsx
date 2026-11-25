@@ -67,7 +67,7 @@ export function AdminDashboard({ tab, query, page }: { tab: Tab; query: string; 
               href={hrefFor(item.id, query)}
               role="tab"
               aria-selected={active}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${active ? "bg-pine text-cream" : "bg-paper text-ink"}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${active ? "bg-pine text-ivory" : "bg-paper text-ink"}`}
             >
               {item.label} ({item.count})
             </Link>

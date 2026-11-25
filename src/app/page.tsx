@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { brand } from "@brand";
 import { Container } from "@/components/Container";
+import { CrownMark } from "@/components/CrownMark";
 import { JsonLd } from "@/components/JsonLd";
 import { faq } from "@/content/faq";
 import { sellLinks } from "@/content/nav";
@@ -39,8 +40,9 @@ export default function HomePage() {
   return (
     <>
       <JsonLd data={faqSchema} />
-      <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="hero-glow mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
+          <CrownMark draw className="mb-5 h-16 w-16 text-[#D4A93C]" />
           <p className="kicker">Nationwide wholesaler</p>
           <h1 className="mt-4 font-serif text-[clamp(2.6rem,6vw,4.6rem)] font-medium leading-[0.98] tracking-[-0.04em] text-ink">
             Cash for what
@@ -63,13 +65,13 @@ export default function HomePage() {
         </div>
         <aside className="relative" aria-label="What an offer covers">
           <div className="absolute -left-4 top-8 hidden h-[86%] w-full rounded-[2rem] bg-pine/10 lg:block" aria-hidden="true" />
-          <div className="relative rounded-[2rem] border border-sand bg-paper p-6 shadow-[0_24px_60px_-36px_rgba(12,18,34,0.45)] sm:p-8">
+          <div className="lift relative rounded-[2rem] border border-sand bg-paper p-6 shadow-[0_24px_60px_-36px_rgba(212,169,60,0.25)] sm:p-8">
             <p className="kicker">One desk</p>
             <h2 className="mt-2 font-serif text-3xl font-medium tracking-[-0.03em]">What we buy</h2>
             <ul className="mt-6 space-y-3 text-sm">
               {sellLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="flex items-center justify-between rounded-2xl border border-sand px-4 py-3 font-semibold hover:border-pine">
+                  <Link href={link.href} className="lift flex items-center justify-between rounded-2xl border border-sand px-4 py-3 font-semibold">
                     {link.label}
                     <span aria-hidden="true" className="text-brass">
                       →
@@ -83,7 +85,7 @@ export default function HomePage() {
         </aside>
       </section>
 
-      <section className="bg-pine-deep text-cream" aria-label="What to expect">
+      <section className="bg-pine-deep text-ivory" aria-label="What to expect">
         <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-x-6 gap-y-8 px-5 py-10 sm:px-8 md:grid-cols-4">
           {facts.map(([title, text]) => (
             <div key={title}>
@@ -94,7 +96,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+      <section className="reveal mx-auto w-full max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <p className="kicker">How it works</p>
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <h2 className="max-w-xl font-serif text-4xl font-medium tracking-[-0.03em]">Three steps. Then you decide.</h2>
@@ -104,7 +106,7 @@ export default function HomePage() {
         </div>
         <ol className="mt-10 grid gap-6 md:grid-cols-3">
           {steps.map(([title, text], index) => (
-            <li key={title} className="rounded-3xl border border-sand bg-paper p-6">
+            <li key={title} className="lift rounded-3xl border border-sand bg-paper p-6">
               <p className="font-serif text-3xl text-brass">0{index + 1}</p>
               <h3 className="mt-4 font-serif text-2xl font-medium tracking-[-0.03em]">{title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-moss">{text}</p>
@@ -113,7 +115,7 @@ export default function HomePage() {
         </ol>
       </section>
 
-      <section className="bg-paper py-16 sm:py-24">
+      <section className="reveal bg-paper py-16 sm:py-24">
         <Container>
           <p className="kicker">Real estate</p>
           <h2 className="mt-3 max-w-2xl font-serif text-4xl font-medium tracking-[-0.03em]">Houses, land, and buildings, in any condition.</h2>
@@ -139,13 +141,13 @@ export default function HomePage() {
 
       <section className="px-5 py-16 sm:px-8">
         <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-2">
-          <Link href="/sell/gold" className="rounded-[2rem] bg-pine p-8 text-cream sm:p-10">
+          <Link href="/sell/gold" className="lift rounded-[2rem] bg-pine p-8 text-ivory sm:p-10">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brass-bright">Precious metals</p>
             <h2 className="mt-3 font-serif text-4xl font-medium tracking-[-0.03em]">Gold, silver, and platinum</h2>
             <p className="mt-4 max-w-md leading-relaxed">Coins, bars, scrap, and bullion. Tell us the weight and purity if you know them.</p>
             <span className="btn btn-inverse mt-8">Sell gold and metals</span>
           </Link>
-          <Link href="/sell/jewelry" className="rounded-[2rem] border border-sand bg-paper p-8 sm:p-10">
+          <Link href="/sell/jewelry" className="lift rounded-[2rem] border border-sand bg-paper p-8 sm:p-10">
             <p className="kicker">Diamonds and jewelry</p>
             <h2 className="mt-3 font-serif text-4xl font-medium tracking-[-0.03em]">Stones, watches, and pieces</h2>
             <p className="mt-4 max-w-md leading-relaxed text-moss">Loose diamonds, finished jewelry, and watches. A GIA report helps. It is not required to ask.</p>
@@ -154,7 +156,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-paper py-16 sm:py-20">
+      <section className="reveal bg-paper py-16 sm:py-20">
         <Container className="max-w-3xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>

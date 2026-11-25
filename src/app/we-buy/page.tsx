@@ -30,7 +30,7 @@ export default function WeBuyPage() {
       <h2 className="mt-12 font-serif text-3xl font-medium">Real estate</h2>
       <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PROPERTY_TYPES.map((type) => (
-          <li key={type} className="rounded-3xl border border-sand bg-paper p-5">
+          <li key={type} className="lift rounded-3xl border border-sand bg-paper p-5">
             <h3 className="font-serif text-2xl font-medium">{type}</h3>
             <p className="mt-2 text-sm leading-relaxed text-moss">{propertyCopy[type]}</p>
           </li>
@@ -39,7 +39,7 @@ export default function WeBuyPage() {
       <Link href="/sell/real-estate" className="btn btn-primary mt-8">Sell real estate</Link>
 
       <div className="mt-16 grid gap-4 md:grid-cols-2">
-        <section className="rounded-[2rem] bg-pine p-8 text-cream">
+        <section className="rounded-[2rem] bg-pine p-8 text-ivory">
           <h2 className="font-serif text-3xl font-medium">Gold and precious metals</h2>
           <p className="mt-3 leading-relaxed">Gold coins and bars, scrap gold, silver, and platinum. Purity and weight make a tighter offer.</p>
           <Link href="/sell/gold" className="btn btn-inverse mt-6">Sell metals</Link>

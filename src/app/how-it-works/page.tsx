@@ -31,12 +31,17 @@ export default function HowItWorksPage() {
       <p className="mt-6 text-lg leading-relaxed text-moss">
         {brand.name} makes a cash offer. You decide. Nothing on the form is a contract, and declining is free.
       </p>
-      <ol className="mt-10 space-y-6">
+      <ol className="relative mt-10 space-y-6 pl-12">
+        <span className="timeline-line absolute bottom-2 left-[1.15rem] top-2 w-px bg-brass" aria-hidden="true" />
         {steps.map((step, index) => (
-          <li key={step.title} className="rounded-3xl border border-sand bg-paper p-6">
-            <p className="font-serif text-3xl text-brass">0{index + 1}</p>
-            <h2 className="mt-3 font-serif text-2xl font-medium">{step.title}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-moss">{step.text}</p>
+          <li key={step.title} className="timeline-step relative">
+            <span className="absolute -left-12 top-6 flex h-9 w-9 items-center justify-center rounded-full border border-brass bg-cream font-serif text-sm text-brass">
+              0{index + 1}
+            </span>
+            <div className="lift rounded-3xl border border-sand bg-paper p-6">
+              <h2 className="font-serif text-2xl font-medium">{step.title}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-moss">{step.text}</p>
+            </div>
           </li>
         ))}
       </ol>

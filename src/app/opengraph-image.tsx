@@ -14,18 +14,35 @@ export default function OpenGraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          background: "#090E18",
-          color: "#F4F1E8",
-          padding: "72px",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#070B12",
+          color: "#F4F0E6",
         }}
       >
-        <div style={{ display: "flex", fontSize: 28, letterSpacing: 6, color: "#E8C97A" }}>{brand.name.toUpperCase()}</div>
-        <div style={{ display: "flex", flexDirection: "column", fontSize: 72, lineHeight: 1.02, fontWeight: 600 }}>
-          <div>Cash for property,</div>
-          <div>gold, and jewelry.</div>
+        <svg width="220" height="220" viewBox="0 0 64 64">
+          <g fill="none" stroke="#D4A93C" strokeWidth="3.25" strokeLinejoin="miter" strokeLinecap="butt">
+            <path d="M8 42H56V56H8Z" />
+            <path d="M8 42L15 24L26.3 33.8" />
+            <path d="M56 42L49 24L37.7 33.8" />
+            <path d="M22 42L32 8L42 42" />
+          </g>
+        </svg>
+        <div
+          style={{
+            display: "flex",
+            marginTop: 28,
+            fontSize: 42,
+            fontWeight: 650,
+            letterSpacing: 8,
+            color: "#D4A93C",
+          }}
+        >
+          CROWN WHOLESALERS
         </div>
-        <div style={{ display: "flex", fontSize: 28, color: "#E7DCC8" }}>Nationwide · No obligation · All 50 states</div>
+        <div style={{ display: "flex", marginTop: 18, fontSize: 28, color: "#F4F0E6" }}>
+          Cash for property, gold, and jewelry
+        </div>
       </div>
     ),
     { ...size },

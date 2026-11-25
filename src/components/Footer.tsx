@@ -14,12 +14,12 @@ const legal = [
 export function Footer() {
   const social = socialProfiles();
   return (
-    <footer className="bg-pine-deep text-cream">
+    <footer className="bg-pine-deep text-ivory">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Logo tone="light" />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-cream">{brand.tagline}</p>
-          <p className="mt-4 text-sm leading-relaxed text-cream">{brand.serviceArea}</p>
+          <Logo surface="dark" />
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory">{brand.tagline}</p>
+          <p className="mt-4 text-sm leading-relaxed text-ivory">{brand.serviceArea}</p>
           <p className="mt-4 text-sm">
             <a className="underline decoration-brass-bright/70 underline-offset-4" href={`mailto:${brand.email}`}>
               {brand.email}
@@ -93,8 +93,8 @@ export function Footer() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8">
-          <Disclosure className="text-cream" />
-          <p className="mt-8 text-xs text-cream">
+          <Disclosure className="text-ivory" />
+          <p className="mt-8 text-xs text-ivory">
             © {new Date().getFullYear()} {brand.name}. {brand.domain}
           </p>
         </div>
