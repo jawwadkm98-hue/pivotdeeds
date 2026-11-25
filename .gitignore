@@ -15,3 +15,7 @@ npm-debug.log*
 tsconfig.tsbuildinfo
 .vercel
 .turbo
+.open-next
+.wrangler
+.dev.vars
+cloudflare-env.d.ts

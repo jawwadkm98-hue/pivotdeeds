@@ -1,0 +1,3 @@
+# Used by `wrangler` / `npm run preview`. Production values are Worker secrets, not this file.
+ADMIN_PASSWORD=
+SESSION_SECRET=

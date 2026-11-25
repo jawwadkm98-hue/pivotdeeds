@@ -15,7 +15,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
       </p>
       {!configured ? (
         <p className="mt-4 rounded-2xl border border-danger/30 bg-[#fdf2f2] p-4 text-sm text-danger" role="status">
-          Set ADMIN_PASSWORD (at least 10 characters) and ADMIN_SESSION_SECRET (at least 24 characters) in the environment, then restart the server.
+          Set ADMIN_PASSWORD (at least 10 characters) and SESSION_SECRET (at least 24 characters), then restart or redeploy.
         </p>
       ) : null}
       {state.error ? (

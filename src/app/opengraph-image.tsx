@@ -21,11 +21,16 @@ export default function OpenGraphImage() {
         }}
       >
         <svg width="220" height="220" viewBox="0 0 64 64">
-          <g fill="none" stroke="#D4A93C" strokeWidth="3.25" strokeLinejoin="miter" strokeLinecap="butt">
-            <path d="M8 42H56V56H8Z" />
-            <path d="M8 42L15 24L26.3 33.8" />
-            <path d="M56 42L49 24L37.7 33.8" />
-            <path d="M22 42L32 8L42 42" />
+          <g fill="none" stroke="#D4A93C" strokeWidth="3.2" strokeLinejoin="round" strokeLinecap="round">
+            <path d="M7 44H57V56.5H7Z" />
+            <path d="M7 44L13 27.6L19 44" />
+            <path d="M57 44L51 27.6L45 44" />
+            <path d="M19 44L32 24.4L45 44" />
+          </g>
+          <g fill="#D4A93C">
+            <circle cx="13" cy="19.6" r="2.35" />
+            <circle cx="32" cy="16.2" r="2.35" />
+            <circle cx="51" cy="19.6" r="2.35" />
           </g>
         </svg>
         <div

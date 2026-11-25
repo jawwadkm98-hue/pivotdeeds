@@ -6,6 +6,7 @@ import { brand } from "@brand";
 import {
   SESSION_COOKIE,
   adminConfigured,
+  adminPassword,
   createSessionToken,
   passwordMatches,
   sessionCookieOptions,
@@ -63,9 +64,9 @@ async function requestMeta(): Promise<RequestMeta> {
   return { ip, userAgent };
 }
 
-function trapped(formData: FormData, ip: string): boolean {
+async function trapped(formData: FormData, ip: string): Promise<boolean> {
   if (!honeypotTripped(formData) && !isTooFast(formData.get("form_started"))) return false;
-  consumeRate(ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS);
+  await consumeRate(ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS);
   return true;
 }
 
@@ -79,7 +80,7 @@ function rateMessage(): string {
 
 export async function submitSeller(_prev: FormState, formData: FormData): Promise<FormState> {
   const meta = await requestMeta();
-  if (trapped(formData, meta.ip)) return successState(sellerSuccess);
+  if (await trapped(formData, meta.ip)) return successState(sellerSuccess);
   const values = formValues(formData, SELLER_KEYS);
   const parsed = parseSeller(formData);
   if (!parsed.ok) {
@@ -92,19 +93,23 @@ export async function submitSeller(_prev: FormState, formData: FormData): Promis
   if (photoProblem) {
     return errorState(photoProblem, { photos: photoProblem }, values);
   }
-  if (!consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS)) {
+  if (!(await consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS))) {
     return errorState(rateMessage(), {}, values);
   }
   let leadId = 0;
   try {
-    leadId = insertSeller(parsed.data, meta);
+    leadId = await insertSeller(parsed.data, meta);
     const files = [];
     for (const file of photoEntries) {
       files.push({ ext: PHOTO_TYPES[file.type], bytes: Buffer.from(await file.arrayBuffer()) });
     }
-    saveSellerPhotos(leadId, files);
+    try {
+      await saveSellerPhotos(leadId, files);
+    } catch (error) {
+      console.error("photo save skipped", error instanceof Error ? error.message : "unknown");
+    }
   } catch (error) {
-    if (leadId) deleteSeller(leadId);
+    if (leadId) await deleteSeller(leadId);
     console.error("seller insert failed", error instanceof Error ? error.message : "unknown");
     return errorState(`Something went wrong saving your request. Email ${brand.email} and we will take it from there.`, {}, values);
   }
@@ -113,17 +118,17 @@ export async function submitSeller(_prev: FormState, formData: FormData): Promis
 
 export async function submitBuyer(_prev: FormState, formData: FormData): Promise<FormState> {
   const meta = await requestMeta();
-  if (trapped(formData, meta.ip)) return successState(buyerSuccess);
+  if (await trapped(formData, meta.ip)) return successState(buyerSuccess);
   const values = formValues(formData, BUYER_KEYS);
   const parsed = parseBuyer(formData);
   if (!parsed.ok) {
     return errorState("Please fix the highlighted fields.", parsed.fieldErrors, values);
   }
-  if (!consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS)) {
+  if (!(await consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS))) {
     return errorState(rateMessage(), {}, values);
   }
   try {
-    insertBuyer(parsed.data, meta);
+    await insertBuyer(parsed.data, meta);
   } catch (error) {
     console.error("buyer insert failed", error instanceof Error ? error.message : "unknown");
     return errorState(`Something went wrong saving your request. Email ${brand.email} and we will take it from there.`, {}, values);
@@ -133,17 +138,17 @@ export async function submitBuyer(_prev: FormState, formData: FormData): Promise
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
   const meta = await requestMeta();
-  if (trapped(formData, meta.ip)) return successState(contactSuccess);
+  if (await trapped(formData, meta.ip)) return successState(contactSuccess);
   const values = formValues(formData, CONTACT_KEYS);
   const parsed = parseContact(formData);
   if (!parsed.ok) {
     return errorState("Please fix the highlighted fields.", parsed.fieldErrors, values);
   }
-  if (!consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS)) {
+  if (!(await consumeRate(meta.ip, "lead", LEAD_LIMIT, LEAD_WINDOW_MS))) {
     return errorState(rateMessage(), {}, values);
   }
   try {
-    insertMessage(parsed.data, meta);
+    await insertMessage(parsed.data, meta);
   } catch (error) {
     console.error("contact insert failed", error instanceof Error ? error.message : "unknown");
     return errorState(`Something went wrong saving your message. Email ${brand.email} instead.`, {}, values);
@@ -152,19 +157,19 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
 }
 
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
-  if (!adminConfigured()) {
-    return { error: "Admin is not configured. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET on the server." };
+  if (!(await adminConfigured())) {
+    return { error: "Admin is not configured. Set ADMIN_PASSWORD and SESSION_SECRET on the server." };
   }
   const meta = await requestMeta();
-  if (!consumeRate(meta.ip, "login", LOGIN_LIMIT, LOGIN_WINDOW_MS)) {
+  if (!(await consumeRate(meta.ip, "login", LOGIN_LIMIT, LOGIN_WINDOW_MS))) {
     return { error: "Too many sign-in attempts. Wait 15 minutes and try again." };
   }
   const password = String(formData.get("password") ?? "");
-  if (!passwordMatches(password)) {
+  if (!passwordMatches(password, await adminPassword())) {
     return { error: "That password is incorrect." };
   }
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, createSessionToken(), sessionCookieOptions());
+  jar.set(SESSION_COOKIE, await createSessionToken(), sessionCookieOptions());
   redirect("/admin");
 }
 
