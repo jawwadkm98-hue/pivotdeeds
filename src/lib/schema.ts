@@ -130,6 +130,23 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 CREATE INDEX IF NOT EXISTS idx_inventory_public ON inventory (published, state, property_type);
 CREATE INDEX IF NOT EXISTS idx_inquiries_inventory ON inventory_inquiries (inventory_id, created_at);
+
+CREATE TABLE IF NOT EXISTS arv_calculations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  title TEXT NOT NULL,
+  inventory_id INTEGER,
+  subject_address TEXT,
+  subject_sqft INTEGER,
+  subject_beds REAL,
+  subject_baths REAL,
+  repair_estimate INTEGER,
+  assignment_fee INTEGER,
+  arv_percent REAL NOT NULL DEFAULT 70,
+  comps_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_arv_updated ON arv_calculations (updated_at);
 `;
 
 /** Applied after SCHEMA_SQL so databases created before these columns still gain them. */
