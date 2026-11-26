@@ -9,6 +9,7 @@ import { CrownMark } from "../CrownMark";
 const links = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/inventory", label: "Inventory" },
+  { href: "/admin/arv", label: "ARV Calculator" },
   { href: "/admin/sellers", label: "Seller leads" },
   { href: "/admin/buyers", label: "Cash buyers" },
   { href: "/admin/messages", label: "Messages" },
