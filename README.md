@@ -214,7 +214,7 @@ After the code is uploaded, apply `migrations/0002_dashboard.sql` to the existin
 
 - `config/brand.ts` — name, default phone, default email, service area, social links
 - `wrangler.jsonc` — Worker name, D1 `DB`, R2 `PHOTOS`, email `NOTIFY_EMAIL`
-- `migrations/0001_init.sql`, `migrations/0002_dashboard.sql`, and `migrations/0003_arv.sql` — D1 schema. Apply `0003_arv.sql` to database `3578b4f9-c5f7-43cb-aa68-b184783f9040` before using saved ARV calculations.
+- `migrations/0001_init.sql`, `migrations/0002_dashboard.sql`, `migrations/0003_arv.sql`, and `migrations/0004_password.sql` — D1 schema. Apply `0004_password.sql` to database `3578b4f9-c5f7-43cb-aa68-b184783f9040` before using the in-dashboard change-password form.
 - `src/lib/db.ts` — D1 on Cloudflare, local SQLite everywhere else
 - `src/lib/actions.ts` — public form actions
 

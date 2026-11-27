@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { readRuntimeEnv } from "./db";
+import { getPasswordVersion, getStoredPassword, hasStoredPassword, verifyPbkdf2 } from "./password";
 
 export const SESSION_COOKIE = "pd_admin";
 const MAX_AGE_SECONDS = 60 * 60 * 12;
@@ -14,9 +15,11 @@ export async function sessionSecret(): Promise<string> {
 }
 
 export async function adminConfigured(): Promise<boolean> {
-  const password = await adminPassword();
   const secret = await sessionSecret();
-  return password.length >= 10 && secret.length >= 24;
+  if (secret.length < 24) return false;
+  if (await hasStoredPassword()) return true;
+  const password = await adminPassword();
+  return password.length >= 10;
 }
 
 export function passwordMatches(input: string, expected: string): boolean {
@@ -24,6 +27,13 @@ export function passwordMatches(input: string, expected: string): boolean {
   const actualHash = createHash("sha256").update(input).digest();
   const expectedHash = createHash("sha256").update(expected).digest();
   return timingSafeEqual(actualHash, expectedHash);
+}
+
+export async function verifyAdminPassword(input: string): Promise<boolean> {
+  if (input.length === 0 || input.length > 200) return false;
+  const stored = await getStoredPassword();
+  if (stored) return verifyPbkdf2(input, stored);
+  return passwordMatches(input, await adminPassword());
 }
 
 export function secureCookie(): boolean {
@@ -47,6 +57,7 @@ export async function createSessionToken(): Promise<string> {
     JSON.stringify({
       exp: Date.now() + MAX_AGE_SECONDS * 1000,
       n: randomBytes(16).toString("hex"),
+      v: await getPasswordVersion(),
     }),
   ).toString("base64url");
   const signature = createHmac("sha256", await sessionSecret()).update(payload).digest("base64url");
@@ -64,8 +75,10 @@ export async function verifySessionToken(token: string | undefined | null): Prom
   const right = Buffer.from(expected);
   if (left.length !== right.length || !timingSafeEqual(left, right)) return false;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: unknown };
-    return typeof data.exp === "number" && data.exp > Date.now();
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: unknown; v?: unknown };
+    if (typeof data.exp !== "number" || data.exp <= Date.now()) return false;
+    const tokenVersion = typeof data.v === "number" && Number.isInteger(data.v) ? data.v : 0;
+    return tokenVersion === (await getPasswordVersion());
   } catch {
     return false;
   }
