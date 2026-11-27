@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Field } from "../fields";
-import { MIN_NEW_PASSWORD_LENGTH } from "@/lib/password";
+import { MIN_NEW_PASSWORD_LENGTH } from "@/lib/password-constants";
 
 export function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");

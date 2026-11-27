@@ -1,11 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { getSql } from "./db";
 
+export { MAX_PASSWORD_LENGTH, MIN_NEW_PASSWORD_LENGTH } from "./password-constants";
+
 export const PBKDF2_ITERATIONS = 100_000;
 export const PBKDF2_SALT_BYTES = 16;
 export const PBKDF2_HASH_BITS = 256;
-export const MIN_NEW_PASSWORD_LENGTH = 12;
-export const MAX_PASSWORD_LENGTH = 200;
 
 export type StoredPassword = {
   hashHex: string;
