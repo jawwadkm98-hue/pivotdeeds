@@ -1,5 +1,6 @@
 import { verifyAdminPassword } from "./auth";
-import { MAX_PASSWORD_LENGTH, MIN_NEW_PASSWORD_LENGTH, savePasswordHash } from "./password";
+import { MAX_PASSWORD_LENGTH, MIN_NEW_PASSWORD_LENGTH } from "./password-constants";
+import { savePasswordHash } from "./password";
 
 export type ChangePasswordInput = {
   currentPassword: string;
