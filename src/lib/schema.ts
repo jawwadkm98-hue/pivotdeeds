@@ -147,6 +147,15 @@ CREATE TABLE IF NOT EXISTS arv_calculations (
   comps_json TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_arv_updated ON arv_calculations (updated_at);
+
+CREATE TABLE IF NOT EXISTS admin_password (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  hash_hex TEXT NOT NULL,
+  salt_hex TEXT NOT NULL,
+  iterations INTEGER NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL
+);
 `;
 
 /** Applied after SCHEMA_SQL so databases created before these columns still gain them. */

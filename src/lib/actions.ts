@@ -6,10 +6,9 @@ import { brand } from "@brand";
 import {
   SESSION_COOKIE,
   adminConfigured,
-  adminPassword,
   createSessionToken,
-  passwordMatches,
   sessionCookieOptions,
+  verifyAdminPassword,
 } from "./auth";
 import { errorState, formValues, successState, type FormState, type LoginState } from "./form-state";
 import { getPublishedListing, insertInquiry } from "./inventory";
@@ -230,7 +229,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: "Too many sign-in attempts. Wait 15 minutes and try again." };
   }
   const password = String(formData.get("password") ?? "");
-  if (!passwordMatches(password, await adminPassword())) {
+  if (!(await verifyAdminPassword(password))) {
     return { error: "That password is incorrect." };
   }
   const jar = await cookies();

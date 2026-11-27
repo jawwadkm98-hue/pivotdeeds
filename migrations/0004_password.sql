@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS admin_password (id INTEGER PRIMARY KEY CHECK (id = 1), hash_hex TEXT NOT NULL, salt_hex TEXT NOT NULL, iterations INTEGER NOT NULL, version INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL);
